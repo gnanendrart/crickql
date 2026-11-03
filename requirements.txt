@@ -1,0 +1,12 @@
+# Week 1: ingest + local load
+requests>=2.31
+python-dotenv>=1.0
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+
+# Dev
+pytest>=8.0
+ruff>=0.6
+
+# Later weeks add: boto3, snowflake-connector-python, dbt-postgres, dbt-snowflake,
+# anthropic, sqlglot, fastapi, uvicorn, sentence-transformers, pgvector
