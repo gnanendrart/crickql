@@ -1,0 +1,432 @@
+version: 2
+
+# These descriptions are the text-to-SQL agent's only view of the data (src/agent/schema_context.py
+# reads them from dbt/target/manifest.json). Write them for a stranger who has never seen IPL data.
+
+models:
+  - name: fct_matches
+    description: >
+      One row per IPL match, 2008 to the latest season. Team names are the current franchise
+      name (Delhi Daredevils appears as Delhi Capitals, Kings XI Punjab as Punjab Kings, Royal
+      Challengers Bangalore as Royal Challengers Bengaluru). Innings totals exclude super overs.
+    columns:
+      - name: match_id
+        description: Cricsheet match ID. Primary key.
+        tests: [unique, not_null]
+      - name: season_year
+        description: IPL season as a year, e.g. 2016. Use this for any "in season X" filter.
+        tests: [not_null]
+      - name: season_label
+        description: Cricsheet's original season label, e.g. '2007/08' for the 2008 season. Prefer season_year.
+      - name: match_date
+        description: Date the match was played.
+        tests: [not_null]
+      - name: match_number
+        description: League match number within the season. Null for playoff matches.
+      - name: stage
+        description: >
+          Playoff stage, null for league matches. Values: 'Final', 'Qualifier 1', 'Qualifier 2',
+          'Eliminator', 'Semi Final' (2008-2010), 'Elimination Final', '3rd Place Play-Off'.
+      - name: is_playoff
+        description: True for any knockout match (stage is not null).
+      - name: team1
+        description: First team listed (current franchise name). team1 and team2 are in no particular order.
+        tests: [not_null]
+      - name: team2
+        description: Second team listed (current franchise name).
+        tests: [not_null]
+      - name: team1_name_at_time
+        description: team1 as named in that season, e.g. 'Delhi Daredevils'.
+      - name: team2_name_at_time
+        description: team2 as named in that season.
+      - name: toss_winner
+        description: Team that won the toss (current franchise name).
+      - name: toss_decision
+        description: "'bat' or 'field', chosen by the toss winner."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['bat', 'field']
+      - name: venue
+        description: Stadium name, cleaned so renamed grounds are one venue (Feroz Shah Kotla is Arun Jaitley Stadium).
+        tests: [not_null]
+      - name: city
+        description: City of the venue, e.g. 'Mumbai', 'Bengaluru'.
+      - name: country
+        description: "'India', 'South Africa' (2009 season) or 'UAE' (2014 part-season, 2020, 2021 part-season)."
+      - name: result_type
+        description: >
+          'normal' (decided in regulation), 'dl' (rain-affected, Duckworth-Lewis), 'tie'
+          (scores level, decided by super over), 'no result' (washed out, no winner).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['normal', 'dl', 'tie', 'no result']
+      - name: winner
+        description: Winning team. For ties this is the super over winner. Null only for no results.
+      - name: loser
+        description: Losing team. Null only for no results.
+      - name: win_by_runs
+        description: Winning margin in runs when the team batting first won. Null otherwise.
+      - name: win_by_wickets
+        description: Winning margin in wickets when the chasing team won. Null otherwise.
+      - name: is_dl_result
+        description: True when the result used the Duckworth-Lewis method.
+      - name: decided_by_super_over
+        description: True when the match was tied and settled by a super over.
+      - name: target_runs
+        description: Runs the chasing side needed. Revised target for D/L matches.
+      - name: target_overs
+        description: Overs available for the chase, 20 unless reduced by rain.
+      - name: player_of_match
+        description: Player of the match name(s), comma separated.
+      - name: has_super_over
+        description: True when the match had at least one super over.
+      - name: has_miscounted_over
+        description: True when an umpire bowled a 5- or 7-ball over in this match (recorded by Cricsheet).
+      - name: first_innings_team
+        description: Team that batted first.
+      - name: first_innings_runs
+        description: Runs scored in the first innings.
+      - name: first_innings_wickets
+        description: Wickets lost in the first innings (retired hurt not counted).
+      - name: first_innings_balls
+        description: Legal balls faced in the first innings (120 = full 20 overs).
+      - name: second_innings_team
+        description: Team that batted second (the chasing team).
+      - name: second_innings_runs
+        description: Runs scored in the second innings.
+      - name: second_innings_wickets
+        description: Wickets lost in the second innings.
+      - name: second_innings_balls
+        description: Legal balls faced in the second innings.
+      - name: won_by
+        description: "'batting first' or 'chasing'. Null for no results and super-over ties."
+
+  - name: fct_deliveries
+    description: >
+      One row per ball bowled, including wides, no-balls and super overs. The most granular
+      table. Use it for questions the marts cannot answer (head-to-head batter vs bowler, a
+      specific over, partnerships). Filter `not is_super_over` for normal match stats.
+    columns:
+      - name: delivery_id
+        description: "Text key '<match_id>-<innings>-<over_number>-<ball_seq>'. Primary key."
+        tests: [unique, not_null]
+      - name: match_id
+        description: Match the ball belongs to. Joins to fct_matches.match_id.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_matches')
+                field: match_id
+      - name: innings
+        description: 1 or 2 for the main innings. 3 and above are super overs.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6]
+      - name: is_super_over
+        description: True for super over balls. Exclude these for season and career stats.
+      - name: over_number
+        description: Over number, 1 to 20 (1-based).
+      - name: ball_seq
+        description: Order of the delivery within the over, counting wides and no-balls.
+      - name: legal_ball
+        description: Legal ball number within the over (1-6). Null for wides and no-balls.
+      - name: phase
+        description: "'powerplay' (overs 1-6), 'middle' (7-15), 'death' (16-20) or 'super_over'."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['powerplay', 'middle', 'death', 'super_over']
+      - name: batting_team
+        description: Team batting (current franchise name).
+      - name: bowling_team
+        description: Team bowling (current franchise name).
+      - name: batter
+        description: Batter on strike, as a short name like 'V Kohli', 'MS Dhoni', 'RG Sharma'.
+      - name: bowler
+        description: Bowler, short name like 'JJ Bumrah', 'YS Chahal'.
+      - name: non_striker
+        description: Batter at the non-striker's end.
+      - name: runs_batter
+        description: Runs credited to the batter off this ball.
+      - name: runs_extras
+        description: Extras on this ball (wides + noballs + byes + legbyes + penalty).
+      - name: runs_total
+        description: All runs from the ball, runs_batter + runs_extras. Sum this for team totals.
+      - name: extras_wides
+        description: Wide runs on this ball.
+      - name: extras_noballs
+        description: No-ball runs on this ball.
+      - name: extras_byes
+        description: Byes on this ball.
+      - name: extras_legbyes
+        description: Leg byes on this ball.
+      - name: extras_penalty
+        description: Penalty runs on this ball (very rare).
+      - name: is_legal
+        description: False for wides and no-balls. Count legal balls for overs bowled and economy.
+      - name: is_ball_faced
+        description: True when the ball counts as faced by the batter (everything except wides).
+      - name: is_four
+        description: True when the batter hit a boundary four (all-run fours excluded).
+      - name: is_six
+        description: True when the batter hit a six.
+      - name: is_dot
+        description: True for a legal ball with no runs of any kind.
+      - name: bowler_runs_conceded
+        description: Runs charged to the bowler (runs_batter + wides + noballs; byes and leg byes are not).
+      - name: is_wicket
+        description: True when any player was out on this ball, including run outs.
+      - name: wicket_kind
+        description: >
+          How the player was out: 'caught', 'bowled', 'run out', 'lbw', 'caught and bowled',
+          'stumped', 'hit wicket', 'retired hurt', 'retired out', 'obstructing the field'.
+      - name: player_out
+        description: Player dismissed. Can be the non-striker (run out), so use this, not batter, to count dismissals.
+      - name: fielders
+        description: Fielder(s) involved in the dismissal, comma separated.
+      - name: is_bowler_wicket
+        description: True when the wicket counts for the bowler (not run out, retired or obstructing).
+      - name: is_dismissal
+        description: True when a player was out for batting-average purposes (retired hurt excluded).
+      - name: season_year
+        description: IPL season as a year.
+      - name: match_date
+        description: Date of the match.
+      - name: venue
+        description: Stadium name.
+      - name: is_playoff
+        description: True when the ball was bowled in a playoff match.
+
+  - name: fct_batting_innings
+    description: >
+      One row per batter per innings (super overs excluded). Use for highest scores, fifties,
+      hundreds, ducks, and a player's record against a team or at a venue.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [match_id, innings, batter]
+    columns:
+      - name: match_id
+        description: Match. Joins to fct_matches.
+        tests: [not_null]
+      - name: innings
+        description: 1 or 2.
+      - name: batter
+        description: Batter short name, e.g. 'V Kohli'.
+        tests: [not_null]
+      - name: batting_team
+        description: Batter's team (current franchise name).
+      - name: bowling_team
+        description: Opposition (current franchise name).
+      - name: season_year
+        description: IPL season as a year.
+      - name: match_date
+        description: Date of the match.
+      - name: venue
+        description: Stadium name.
+      - name: is_playoff
+        description: True for playoff matches.
+      - name: runs
+        description: Runs scored in the innings.
+      - name: balls_faced
+        description: Balls faced (wides excluded).
+      - name: fours
+        description: Boundary fours hit.
+      - name: sixes
+        description: Sixes hit.
+      - name: is_out
+        description: True when dismissed. False means not out (an asterisk on a scorecard, e.g. 175*).
+      - name: dismissal_kind
+        description: How the batter was out, null if not out.
+      - name: strike_rate
+        description: Runs per 100 balls in this innings.
+
+  - name: mart_batting_season
+    description: >
+      One row per batter per season per team (super overs excluded). For career totals,
+      SUM the counts across seasons and recompute averages and strike rates from the sums;
+      never average the averages.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [season_year, batter, team]
+    columns:
+      - name: season_year
+        description: IPL season as a year.
+        tests: [not_null]
+      - name: batter
+        description: Batter short name, e.g. 'V Kohli', 'DA Warner'.
+        tests: [not_null]
+      - name: team
+        description: Team the batter played for that season (current franchise name).
+      - name: innings
+        description: Innings batted.
+      - name: runs
+        description: Runs scored.
+      - name: balls_faced
+        description: Balls faced (wides excluded).
+      - name: fours
+        description: Boundary fours.
+      - name: sixes
+        description: Sixes.
+      - name: dismissals
+        description: Times out (retired hurt not counted).
+      - name: not_outs
+        description: Innings not out.
+      - name: highest_score
+        description: Highest score in a single innings that season.
+      - name: fifties
+        description: Scores of 50 to 99.
+      - name: hundreds
+        description: Scores of 100 or more.
+      - name: ducks
+        description: Dismissed for 0.
+      - name: strike_rate
+        description: Runs per 100 balls faced.
+      - name: batting_average
+        description: Runs per dismissal. Null if never dismissed.
+
+  - name: mart_bowling_phase
+    description: >
+      One row per bowler per season per team per phase (powerplay, middle, death; super overs
+      excluded). For a bowler's season or career totals, SUM across phases and recompute economy
+      as runs_conceded * 6 / legal_balls. Overs bowled = legal_balls / 6.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [season_year, bowler, team, phase]
+    columns:
+      - name: season_year
+        description: IPL season as a year.
+        tests: [not_null]
+      - name: bowler
+        description: Bowler short name, e.g. 'JJ Bumrah', 'SP Narine'.
+        tests: [not_null]
+      - name: team
+        description: Team the bowler played for (current franchise name).
+      - name: phase
+        description: "'powerplay' (overs 1-6), 'middle' (7-15) or 'death' (16-20)."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['powerplay', 'middle', 'death']
+      - name: matches
+        description: Matches in which the bowler bowled in this phase.
+      - name: legal_balls
+        description: Legal balls bowled. Divide by 6 for overs.
+      - name: runs_conceded
+        description: Runs charged to the bowler (byes and leg byes excluded).
+      - name: wickets
+        description: Wickets credited to the bowler (run outs excluded).
+      - name: dot_balls
+        description: Legal balls with no runs.
+      - name: fours_conceded
+        description: Fours hit off the bowler.
+      - name: sixes_conceded
+        description: Sixes hit off the bowler.
+      - name: wides
+        description: Wide runs conceded.
+      - name: noballs
+        description: No-ball runs conceded.
+      - name: economy
+        description: Runs conceded per over.
+      - name: bowling_average
+        description: Runs conceded per wicket.
+      - name: bowling_strike_rate
+        description: Legal balls per wicket.
+      - name: dot_ball_pct
+        description: Percentage of legal balls that were dots.
+
+  - name: mart_team_season
+    description: One row per team per season. Win/loss record, titles and run rates.
+    tests:
+      - unique_combination:
+          arguments:
+            columns: [season_year, team]
+    columns:
+      - name: season_year
+        description: IPL season as a year.
+        tests: [not_null]
+      - name: team
+        description: Franchise (current name).
+        tests: [not_null]
+      - name: matches
+        description: Matches played, including playoffs and no results.
+      - name: wins
+        description: Matches won, including super over wins.
+      - name: losses
+        description: Matches lost, including super over losses.
+      - name: no_results
+        description: Matches with no result.
+      - name: super_over_wins
+        description: Tied matches won in a super over.
+      - name: super_over_losses
+        description: Tied matches lost in a super over.
+      - name: tosses_won
+        description: Tosses won.
+      - name: is_champion
+        description: True if the team won that season's final (the IPL title).
+      - name: reached_final
+        description: True if the team played in the final.
+      - name: reached_playoffs
+        description: True if the team played any playoff match.
+      - name: win_pct
+        description: Wins as a percentage of matches with a result.
+      - name: runs_scored
+        description: Total runs scored in the season (super overs excluded).
+      - name: runs_conceded
+        description: Total runs conceded.
+      - name: run_rate
+        description: Runs scored per over.
+      - name: run_rate_conceded
+        description: Runs conceded per over.
+
+  - name: dim_players
+    description: One row per player who batted or bowled. Names are Cricsheet short names ('V Kohli', 'MS Dhoni').
+    columns:
+      - name: player
+        description: Player short name. Matches batter, bowler and non_striker in other tables.
+        tests: [unique, not_null]
+      - name: first_season
+        description: First IPL season played.
+      - name: last_season
+        description: Most recent IPL season played.
+      - name: seasons_played
+        description: Number of seasons with at least one appearance.
+      - name: matches_played
+        description: Matches in which the player batted, bowled or was at the non-striker's end.
+      - name: teams_played_for
+        description: Number of different franchises.
+      - name: latest_team
+        description: Franchise in the player's most recent match.
+
+  - name: dim_venues
+    description: One row per stadium, with batting-first vs chasing record.
+    columns:
+      - name: venue
+        description: Stadium name.
+        tests: [unique, not_null]
+      - name: city
+        description: City.
+      - name: country
+        description: Country.
+      - name: matches
+        description: IPL matches played at the venue.
+      - name: first_season
+        description: First season the venue hosted.
+      - name: last_season
+        description: Most recent season hosted.
+      - name: avg_first_innings_runs
+        description: Average first-innings score in normal (non rain-affected) results.
+      - name: wins_batting_first
+        description: Matches won by the team batting first.
+      - name: wins_chasing
+        description: Matches won by the chasing team.
+      - name: chasing_win_pct
+        description: Percentage of decided matches won by the chasing team.

@@ -1,0 +1,148 @@
+# Worked examples shown to the model in every prompt. Each one teaches a pattern, not an answer.
+# Keep these disjoint from evals/sql_eval.yaml, or the eval measures memory, not skill.
+examples:
+  - question: Who scored the most runs in the 2016 season?
+    pattern: season filter on a mart
+    sql: |
+      SELECT batter, team, runs
+      FROM marts.mart_batting_season
+      WHERE season_year = 2016
+      ORDER BY runs DESC
+      LIMIT 1
+
+  - question: Top 5 run scorers in IPL history
+    pattern: career totals = SUM across seasons
+    sql: |
+      SELECT batter, SUM(runs) AS career_runs
+      FROM marts.mart_batting_season
+      GROUP BY batter
+      ORDER BY career_runs DESC
+      LIMIT 5
+
+  - question: Highest career strike rate with at least 1000 balls faced
+    pattern: recompute a rate from sums, minimum threshold, show volume
+    sql: |
+      SELECT batter,
+             SUM(balls_faced) AS balls_faced,
+             ROUND(SUM(runs) * 100.0 / SUM(balls_faced), 2) AS strike_rate
+      FROM marts.mart_batting_season
+      GROUP BY batter
+      HAVING SUM(balls_faced) >= 1000
+      ORDER BY strike_rate DESC
+      LIMIT 10
+
+  - question: Best death-over economy in 2023, minimum 60 balls
+    pattern: phase filter, recompute economy from sums
+    sql: |
+      SELECT bowler, SUM(legal_balls) AS balls,
+             ROUND(SUM(runs_conceded) * 6.0 / SUM(legal_balls), 2) AS economy
+      FROM marts.mart_bowling_phase
+      WHERE season_year = 2023 AND phase = 'death'
+      GROUP BY bowler
+      HAVING SUM(legal_balls) >= 60
+      ORDER BY economy
+      LIMIT 10
+
+  - question: Most wickets in the powerplay across all seasons
+    pattern: phase filter, career sum
+    sql: |
+      SELECT bowler, SUM(wickets) AS powerplay_wickets
+      FROM marts.mart_bowling_phase
+      WHERE phase = 'powerplay'
+      GROUP BY bowler
+      ORDER BY powerplay_wickets DESC
+      LIMIT 10
+
+  - question: Which team won the IPL in 2014?
+    pattern: titles live in mart_team_season.is_champion
+    sql: |
+      SELECT team
+      FROM marts.mart_team_season
+      WHERE season_year = 2014 AND is_champion
+
+  - question: Head to head record between Mumbai Indians and Chennai Super Kings
+    pattern: head-to-head from fct_matches, team order does not matter
+    sql: |
+      SELECT winner, COUNT(*) AS wins
+      FROM marts.fct_matches
+      WHERE (team1 = 'Mumbai Indians' AND team2 = 'Chennai Super Kings')
+         OR (team1 = 'Chennai Super Kings' AND team2 = 'Mumbai Indians')
+      GROUP BY winner
+      ORDER BY wins DESC
+
+  - question: How has Jasprit Bumrah done against Virat Kohli?
+    pattern: batter vs bowler needs ball level data
+    sql: |
+      SELECT batter, bowler,
+             SUM(runs_batter) AS runs,
+             SUM(CASE WHEN is_ball_faced THEN 1 ELSE 0 END) AS balls,
+             SUM(CASE WHEN is_bowler_wicket AND player_out = batter THEN 1 ELSE 0 END) AS dismissals
+      FROM marts.fct_deliveries
+      WHERE batter = 'V Kohli' AND bowler = 'JJ Bumrah' AND NOT is_super_over
+      GROUP BY batter, bowler
+
+  - question: Which venue has the highest average first innings score, minimum 20 matches?
+    pattern: venue questions use dim_venues
+    sql: |
+      SELECT venue, city, matches, avg_first_innings_runs
+      FROM marts.dim_venues
+      WHERE matches >= 20
+      ORDER BY avg_first_innings_runs DESC
+      LIMIT 5
+
+  - question: List every IPL match that went to a super over
+    pattern: super overs are flagged on fct_matches
+    sql: |
+      SELECT match_date, team1, team2, winner AS super_over_winner, venue
+      FROM marts.fct_matches
+      WHERE decided_by_super_over
+      ORDER BY match_date
+
+  - question: Highest individual scores in IPL history
+    pattern: single innings = fct_batting_innings
+    sql: |
+      SELECT batter, batting_team, bowling_team AS against, runs, balls_faced,
+             CASE WHEN is_out THEN 'out' ELSE 'not out' END AS status, season_year
+      FROM marts.fct_batting_innings
+      ORDER BY runs DESC
+      LIMIT 10
+
+  - question: How many times has winning the toss meant winning the match?
+    pattern: compare two columns on fct_matches, exclude no results
+    sql: |
+      SELECT COUNT(*) AS matches,
+             SUM(CASE WHEN toss_winner = winner THEN 1 ELSE 0 END) AS toss_winner_won,
+             ROUND(SUM(CASE WHEN toss_winner = winner THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2)
+               AS pct
+      FROM marts.fct_matches
+      WHERE result_type <> 'no result'
+
+  - question: Most sixes by Rohit Sharma in a season
+    pattern: player short name, season grain
+    sql: |
+      SELECT season_year, team, sixes
+      FROM marts.mart_batting_season
+      WHERE batter = 'RG Sharma'
+      ORDER BY sixes DESC
+      LIMIT 1
+
+  - question: Which teams have won the most titles?
+    pattern: count champions across seasons
+    sql: |
+      SELECT team, COUNT(*) AS titles,
+             STRING_AGG(season_year::text, ', ' ORDER BY season_year) AS seasons
+      FROM marts.mart_team_season
+      WHERE is_champion
+      GROUP BY team
+      ORDER BY titles DESC
+
+  - question: Runs scored by each team in the death overs in 2024
+    pattern: team totals by phase need ball level data
+    sql: |
+      SELECT batting_team, SUM(runs_total) AS death_runs,
+             ROUND(SUM(runs_total) * 6.0
+                   / SUM(CASE WHEN is_legal THEN 1 ELSE 0 END), 2) AS run_rate
+      FROM marts.fct_deliveries
+      WHERE season_year = 2024 AND phase = 'death'
+      GROUP BY batting_team
+      ORDER BY run_rate DESC

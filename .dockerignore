@@ -1,0 +1,17 @@
+.git
+.env
+*.p8
+*.pem
+data/
+dbt/target/
+dbt/target_*/
+dbt/logs/
+logs/
+airflow/
+notebooks/
+evals/runs/
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+.DS_Store

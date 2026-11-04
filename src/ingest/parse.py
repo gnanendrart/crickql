@@ -1,7 +1,7 @@
 """Parse one Cricsheet match JSON into a match row and a list of delivery rows.
 
 Design notes (see notes/cricsheet_schema.md):
-- Delivery key is (match_id, innings, over, ball_seq). `actual_delivery` repeats on
+- Delivery key is (match_id, innings, over_no, ball_seq). `actual_delivery` repeats on
   wides and no-balls, so it is kept as an attribute, never as a key.
 - Every edge case is flagged, never silently dropped: super overs, ties, D/L, no-results,
   miscounted overs, multi-type extras.
@@ -134,7 +134,7 @@ def parse_match(path: Path) -> tuple[dict, list[dict]]:
                 deliveries.append({
                     "match_id": match_id,
                     "innings": inn_no,
-                    "over": over_no,  # 0-based, as Cricsheet stores it
+                    "over_no": over_no,  # 0-based, as Cricsheet stores it. "over" is an SQL keyword
                     "ball_seq": seq,  # every delivery, including wides and no-balls
                     "legal_ball": legal if is_legal else None,
                     "actual_delivery": d.get("actual_delivery"),
@@ -147,6 +147,8 @@ def parse_match(path: Path) -> tuple[dict, list[dict]]:
                     "runs_batter": runs["batter"],
                     "runs_extras": runs["extras"],
                     "runs_total": runs["total"],
+                    # a 4 or 6 that was run, not hit to the rope (overthrows, all-run four)
+                    "is_non_boundary": bool(runs.get("non_boundary")),
                     **{f"extras_{k}": extras.get(k, 0) for k in EXTRA_TYPES},
                     "is_legal": is_legal,
                     "wicket_count": len(wickets),

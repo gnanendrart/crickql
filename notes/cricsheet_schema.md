@@ -50,7 +50,7 @@ Each file is one match, named `<match_id>.json`. The archive also has `README.tx
 
 - `ball_seq`: 1-based index of the delivery within the over, counting every delivery including wides and no-balls
 - `legal_ball`: count of legal deliveries so far in the over (wides and no-balls do not advance it)
-- Primary key: `(match_id, innings, over, ball_seq)`
+- Primary key: `(match_id, innings, over_no, ball_seq)`. `over_no` is 0-based; `over` is avoided because it is an SQL keyword
 
 ## extras
 

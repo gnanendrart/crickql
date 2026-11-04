@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw layer written by src/ingest (Postgres) or COPY INTO from S3 (Snowflake).
+    schema: raw
+    tables:
+      - name: matches
+        description: "Postgres only. One row per match, parsed by src/ingest/parse.py."
+      - name: deliveries
+        description: "Postgres only. One row per delivery, parsed by src/ingest/parse.py."
+      - name: matches_json
+        description: "Snowflake only. One row per Cricsheet match file, the whole file in a VARIANT column `doc`."

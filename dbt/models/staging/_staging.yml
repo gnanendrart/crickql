@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: base_matches
+    description: Target-specific adapter. Postgres reads raw.matches; Snowflake flattens RAW.MATCHES_JSON into the same columns.
+  - name: base_deliveries
+    description: Target-specific adapter. Postgres reads raw.deliveries; Snowflake flattens RAW.MATCHES_JSON innings, overs and deliveries.
+  - name: stg_matches
+    description: One row per match with franchise names and cleaned venues.
+    columns:
+      - name: match_id
+        tests: [unique, not_null]
+      - name: team1
+        description: Null here means a team name is missing from seeds/team_franchises.csv.
+        tests: [not_null]
+      - name: team2
+        tests: [not_null]
+      - name: venue
+        tests: [not_null]
+      - name: country
+        description: Null here means a venue is missing from seeds/venue_aliases.csv.
+        tests: [not_null]
+  - name: stg_deliveries
+    description: One row per delivery with cricket rules applied (phase, bowler wickets, boundaries).
+    columns:
+      - name: batting_team
+        tests: [not_null]
+      - name: bowling_team
+        tests: [not_null]
+
+seeds:
+  - name: team_franchises
+    description: Maps every team name Cricsheet has used to the franchise's current name.
+    columns:
+      - name: team_name
+        tests: [unique, not_null]
+  - name: venue_aliases
+    description: Maps raw Cricsheet venue strings to one clean name per ground, with city and country.
+    columns:
+      - name: venue_raw
+        tests: [unique, not_null]

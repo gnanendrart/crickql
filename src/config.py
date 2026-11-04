@@ -19,3 +19,11 @@ PG_URL = (
     f"@{os.getenv('PG_HOST', 'localhost')}:{os.getenv('PG_PORT', '5432')}"
     f"/{os.getenv('PG_DB', 'crickql')}"
 )
+
+PG_CONN = {
+    "host": os.getenv("PG_HOST", "localhost"),
+    "port": int(os.getenv("PG_PORT", "5432")),
+    "dbname": os.getenv("PG_DB", "crickql"),
+    "user": os.getenv("PG_USER") or None,
+    "password": os.getenv("PG_PASSWORD") or None,
+}

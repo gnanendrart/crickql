@@ -1,0 +1,60 @@
+# One command, no cloud account:
+#   ANTHROPIC_API_KEY=sk-... docker compose up --build
+#   curl -s localhost:8000/query -H 'content-type: application/json' \
+#        -d '{"question": "Who scored the most runs in 2016?"}'
+#
+# db    Postgres 15 with pgvector (pgvector is used by the Week 5 RAG layer)
+# seed  one-shot: loads Cricsheet, runs dbt build + tests, creates the read-only role
+# api   FastAPI on :8000, starts only after seed succeeds. Swagger UI at /docs
+#
+# ANTHROPIC_API_KEY and SQL_MODEL are read from your shell or from .env in this folder.
+# Set SEED_MODE=fixtures for a fully offline start with 3 sample matches.
+
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_USER: crickql
+      POSTGRES_PASSWORD: crickql
+      POSTGRES_DB: crickql
+    ports:
+      - "5433:5432"  # 5433 so it never clashes with a local Postgres on 5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crickql -d crickql"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  seed:
+    build: .
+    command: ["bash", "scripts/seed.sh"]
+    environment: &db_env
+      PG_HOST: db
+      PG_PORT: "5432"
+      PG_DB: crickql
+      PG_USER: crickql
+      PG_PASSWORD: crickql
+      SEED_MODE: ${SEED_MODE:-full}
+      SEED_FORCE: ${SEED_FORCE:-0}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    environment:
+      <<: *db_env
+      PG_READER_USER: crickql_reader
+      PG_READER_PASSWORD: crickql_reader
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      SQL_MODEL: ${SQL_MODEL:-claude-sonnet-5-5}
+    ports:
+      - "8000:8000"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

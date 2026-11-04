@@ -1,0 +1,33 @@
+# Single-container Airflow 3 (`airflow standalone`: scheduler, API server, DAG processor and
+# triggerer in one process). The official multi-container compose needs ~4 GB of RAM for a
+# CeleryExecutor stack; one weekly DAG does not need that.
+#
+#   cd airflow && docker compose up --build
+#   UI: http://localhost:8080  (local dev only: login is disabled, everyone is admin)
+#
+# The DAG talks to the Postgres on your Mac through host.docker.internal.
+
+services:
+  airflow:
+    build:
+      context: ..
+      dockerfile: airflow/Dockerfile
+    command: standalone
+    user: "${AIRFLOW_UID:-50000}:0"  # set AIRFLOW_UID=$(id -u) in .env on Linux
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../.env
+    environment:
+      PG_HOST: host.docker.internal
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/crickql/airflow/dags
+      AIRFLOW__API__EXPOSE_CONFIG: "false"
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      SNOWFLAKE_PRIVATE_KEY_PATH: /opt/keys/snowflake_key.p8
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ..:/opt/crickql
+      - ${SNOWFLAKE_KEY_DIR:-~/.ssh/snowflake}:/opt/keys:ro
+      - ${HOME}/.aws:/home/airflow/.aws:ro

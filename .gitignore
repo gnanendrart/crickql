@@ -29,3 +29,7 @@ airflow/config/
 # OS / editor
 .DS_Store
 .vscode/
+
+# dbt generated
+dbt/.user.yml
+dbt/target_*/
