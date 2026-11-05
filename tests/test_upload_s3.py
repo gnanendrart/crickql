@@ -9,6 +9,15 @@ from src.ingest.upload_s3 import upload  # noqa: E402
 from tests.conftest import NO_RESULT, NORMAL  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def fake_aws(monkeypatch):
+    """Isolate from the real ~/.aws and .env: moto needs credentials, not a real profile."""
+    monkeypatch.delenv("AWS_PROFILE", raising=False)
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "ca-central-1")
+
+
 @moto.mock_aws
 def test_upload_is_partitioned_and_idempotent(tmp_path):
     for f in (NORMAL, NO_RESULT):
