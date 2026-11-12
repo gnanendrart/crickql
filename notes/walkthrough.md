@@ -99,7 +99,7 @@ Rule of thumb: if you can't explain a line, change it until you can, or delete i
 
 ## Known gaps (say these before an interviewer finds them)
 
-1. Snowflake models are syntax-checked, not run-tested yet (until your W2 D3 run).
+1. Snowflake raw load uses the internal stage; the S3 external stage is pending AWS account activation.
 2. Players are keyed by printed name, not Cricsheet person ID. Two players with the same short name would merge. The registry IDs are in the raw JSON; that's a good "what I'd do next".
 3. Loads are full reloads every run (fast at 1,243 matches). Incremental loads by match_id are the next step at scale.
 4. The read-only role has a fixed local password. Fine for Docker on a laptop, not for a hosted deploy.
