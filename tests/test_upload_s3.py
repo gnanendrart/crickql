@@ -44,3 +44,15 @@ def test_snowflake_load_sql_splits_into_three_statements():
     stmts = split_sql((ROOT / "sql/snowflake/load_raw.sql").read_text(), "CRICSHEET_INTERNAL")
     assert [s.split()[0] for s in stmts] == ["DELETE", "COPY", "SELECT"]
     assert all("{stage}" not in s and "@CRICKQL.RAW.CRICSHEET_INTERNAL" in s for s in stmts[:2])
+
+
+def test_snowflake_copy_pattern_matches_plain_and_gzipped_files():
+    import re
+
+    from src.config import ROOT
+
+    sql = (ROOT / "sql/snowflake/load_raw.sql").read_text()
+    pattern = re.search(r"PATTERN = '([^']+)'", sql).group(1)
+    for name in ("cricsheet/ipl/dt=2026-11-12/1082591.json", "1082591.json.gz"):
+        assert re.fullmatch(pattern, name)
+    assert not re.fullmatch(pattern, "README.txt")

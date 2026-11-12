@@ -3,7 +3,8 @@
 
 with src as (
     select
-        cast(replace(split_part(file_name, '/', -1), '.json', '') as bigint) as match_id,
+        -- file name is <match_id>.json (S3) or <match_id>.json.gz (internal stage, gzipped by PUT)
+        cast(split_part(split_part(file_name, '/', -1), '.', 1) as bigint) as match_id,
         file_name,
         doc
     from {{ source('raw', 'matches_json') }}

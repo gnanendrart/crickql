@@ -3,7 +3,7 @@
 
 with flat as (
     select
-        cast(replace(split_part(m.file_name, '/', -1), '.json', '') as bigint) as match_id,
+        cast(split_part(split_part(m.file_name, '/', -1), '.', 1) as bigint) as match_id,
         i.index + 1                                                      as innings,
         o.value:over::int                                                as over_no,
         d.index + 1                                                      as ball_seq,

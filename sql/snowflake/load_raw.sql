@@ -10,7 +10,7 @@ WHERE split_part(file_name, '/', -1) IN (
 
 COPY INTO CRICKQL.RAW.MATCHES_JSON (file_name, doc)
 FROM (SELECT metadata$filename, $1 FROM @CRICKQL.RAW.{stage})
-PATTERN = '.*[.]json'
+PATTERN = '.*[.]json([.]gz)?'  -- internal stage PUT gzips files
 FORCE = TRUE
 ON_ERROR = 'ABORT_STATEMENT';
 
