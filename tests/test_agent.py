@@ -50,7 +50,7 @@ def test_good_sql_first_try():
     assert out["ok"] and out["rows"] == [[match_count()]]
     assert len(out["attempts"]) == 1 and out["sql"].endswith("LIMIT 200")
     assert "marts.fct_matches" in out["sql"]
-    assert fake.calls[0]["tool_choice"] == {"type": "tool", "name": "run_sql"}
+    assert fake.calls[0]["tool_choice"] == {"type": "auto"}
 
 
 @needs_db
@@ -102,3 +102,12 @@ def test_eval_harness_scores_an_oracle_at_100_percent():
 
     summary = run(agent=oracle, write=False)
     assert summary["correct"] == summary["questions"] == 30
+
+
+@needs_db
+def test_plain_text_reply_counts_as_attempt_and_retries():
+    fake = FakeClaude([None, "SELECT count(*) FROM marts.fct_matches"])
+    out = ask("How many matches are there?", client=fake)
+    assert out["ok"] and len(out["attempts"]) == 2
+    assert "without calling run_sql" in out["attempts"][0]["error"]
+    assert fake.calls[1]["messages"][-1]["role"] == "user"

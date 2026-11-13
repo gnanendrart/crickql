@@ -71,10 +71,10 @@ Rule of thumb: if you can't explain a line, change it until you can, or delete i
 
 ## 7. The agent
 
-**Flow:** question → Claude (schema card + rules + 15 examples, forced to call the `run_sql` tool) → guardrails → run as `crickql_reader` → rows. On an error, Claude sees the error once and retries (max 2 attempts).
+**Flow:** question → Claude (schema card + rules + 15 examples, told to call the `run_sql` tool) → guardrails → run as `crickql_reader` → rows. On an error, Claude sees the error once and retries (max 2 attempts).
 
 - **Schema card** = the dbt descriptions, read from `manifest.json`. One source of truth. To improve the SQL, improve the docs.
-- **Forced tool use** means the output is always a structured `{sql, reasoning}`, never prose with SQL buried in it.
+- **Tool use** means the output is a structured `{sql, reasoning}`, never prose with SQL buried in it. The first live run failed because `claude-sonnet-5-5` rejects forced `tool_choice`, so it is `auto` plus a prompt rule, and a plain-text reply counts as a failed attempt and is retried. Real API behaviour beat my design assumption: good bug story.
 - **Guardrails, layer 1 (sqlglot):** one statement, must be a query, no write nodes anywhere in the tree (that catches a DELETE hidden in a CTE), only `marts` tables, no `pg_sleep` / `pg_read_file` / `dblink`, LIMIT 200 added or capped at 1,000.
 - **Guardrails, layer 2 (Postgres):** a read-only role, SELECT on marts only, `default_transaction_read_only`, 10s `statement_timeout`. Tested by hand: blocked from raw, can't CREATE, pg_sleep(11) cancelled.
 - **Examples teach patterns, not answers**, and are disjoint from the eval set. Otherwise the eval measures memory.

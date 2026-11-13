@@ -12,6 +12,9 @@ class FakeClaude:
     def _create(self, **kwargs):
         self.calls.append(kwargs)
         sql = self.sqls.pop(0)
+        if sql is None:  # scripted plain-text reply, no tool call
+            text = SimpleNamespace(type="text", text="Shubman Gill scored the most.")
+            return SimpleNamespace(content=[text], stop_reason="end_turn")
         block = SimpleNamespace(type="tool_use", id=f"toolu_{len(self.calls)}", name="run_sql",
                                 input={"sql": sql, "reasoning": "scripted"})
         return SimpleNamespace(content=[block], stop_reason="tool_use")

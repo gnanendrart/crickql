@@ -1,8 +1,9 @@
 """Text-to-SQL agent: question -> Claude -> guardrails -> read-only execution -> rows.
 
 Flow for one question:
-1. Claude gets the schema card (from dbt docs), the rules and 15 worked examples, and must
-   answer by calling the `run_sql` tool (forced tool use, so the output is always one SQL string).
+1. Claude gets the schema card (from dbt docs), the rules and 15 worked examples, and is told
+   to answer only by calling the `run_sql` tool. tool_choice is "auto" because current models
+   reject forced tool choice; a plain-text reply counts as a failed attempt and is retried.
 2. The SQL goes through src/agent/guardrails.py. A refusal is sent back to Claude as a tool error.
 3. The SQL runs as crickql_reader (read-only, marts only, 10s timeout).
 4. On a guardrail refusal or a database error, Claude sees the error and gets one more try
@@ -53,6 +54,7 @@ Rules:
 - Round rates to 2 decimals. Return only the columns needed to answer, with clear aliases.
 - If the question cannot be answered from these tables, still call run_sql with
   SELECT 'not answerable: <reason>' AS answer.
+- Always answer by calling the run_sql tool exactly once. Never reply in plain text.
 """
 
 RUN_SQL_TOOL = {
@@ -140,10 +142,18 @@ def ask(question: str, client=None, conn_factory=reader_conn,
             max_tokens=1500,
             system=system_prompt(),
             tools=[RUN_SQL_TOOL],
-            tool_choice={"type": "tool", "name": "run_sql"},
+            tool_choice={"type": "auto"},
             messages=messages,
         )
-        call = next(b for b in response.content if b.type == "tool_use")
+        call = next((b for b in response.content if b.type == "tool_use"), None)
+        if call is None:  # answered in prose instead of SQL: count it, nudge, retry
+            attempts.append({"attempt": attempt, "sql": "", "reasoning": None,
+                             "error": "model replied without calling run_sql"})
+            messages += [
+                {"role": "assistant", "content": response.content},
+                {"role": "user", "content": "Answer by calling the run_sql tool with one SELECT."},
+            ]
+            continue
         raw_sql = call.input.get("sql", "")
         record = {"attempt": attempt, "sql": raw_sql, "reasoning": call.input.get("reasoning")}
         try:
