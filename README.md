@@ -60,6 +60,8 @@ Airflow runs the pipeline weekly: `download >> upload_s3 >> [load_pg, load_snowf
 | `fct_deliveries` | ball | Batter vs bowler, anything else |
 | `dim_players`, `dim_venues` | player, venue | Careers, grounds, chasing records |
 
+Every column, with its description: [`docs/schema_card.md`](docs/schema_card.md). It is the exact schema card the agent reads, generated from the dbt docs with `python -m src.agent.schema_context > docs/schema_card.md`. The source of truth is [`dbt/models/marts/_marts.yml`](dbt/models/marts/_marts.yml).
+
 ## Results
 
 Execution accuracy on a 30-question eval set (`evals/sql_eval.yaml`). The generated SQL and the hand-written gold SQL both run, and the result sets have to match.
@@ -110,7 +112,8 @@ src/agent/    schema_context, guardrails, text_to_sql, examples.yaml
 dbt/          staging + marts models, seeds (team and venue names), tests
 airflow/      DAG + single-container Airflow 3
 api/          FastAPI app
-evals/        30-question SQL eval and runner
+evals/        30-question SQL eval, holdout set and runner
+docs/         schema card (every table and column), Airflow screenshot
 sql/          Postgres raw schema and read-only role, Snowflake stage and COPY
 notebooks/    reconciliation against my earlier Kaggle load
 ```

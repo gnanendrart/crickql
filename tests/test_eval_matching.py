@@ -1,4 +1,4 @@
-from evals.run_sql_eval import results_match
+from evals.run_sql_eval import is_not_answerable, results_match
 
 
 def test_extra_generated_columns_allowed():
@@ -46,3 +46,10 @@ def test_ordered_fewer_rows_than_gold_fails():
 
 def test_unordered_still_needs_exact_row_count():
     assert not results_match([[287]], [[287], [286]])
+
+
+def test_not_answerable_detection():
+    assert is_not_answerable([["not answerable: no pace data in Cricsheet"]])
+    assert is_not_answerable([["Not Answerable: x"]])
+    assert not is_not_answerable([["CH Gayle", 357]])
+    assert not is_not_answerable([["not answerable: x"], ["y"]])

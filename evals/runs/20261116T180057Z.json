@@ -1,0 +1,364 @@
+{
+  "summary": {
+    "timestamp": "2026-11-16 18:00 UTC",
+    "label": "[sql_eval_holdout] holdout v1",
+    "model": "claude-sonnet-5-5",
+    "questions": 12,
+    "correct": 11,
+    "accuracy_pct": 91.7,
+    "unverified_gold": 0,
+    "recovered_by_retry": 0,
+    "failed_ids": [
+      "h06"
+    ]
+  },
+  "details": [
+    {
+      "id": "h01",
+      "category": "unanswerable",
+      "question": "Which team did Sharma captain to a title win",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT 'not answerable: the tables have no captaincy data, and \"Sharma\" is ambiguous (e.g. RG Sharma), so the team he captained to a title cannot be determined' AS answer LIMIT 200",
+      "gold_rows": [],
+      "rows": [
+        [
+          "not answerable: the tables have no captaincy data, and \"Sharma\" is ambiguous (e.g. RG Sharma), so the team he captained to a title cannot be determined"
+        ]
+      ],
+      "latency_ms": 3386
+    },
+    {
+      "id": "h02",
+      "category": "ambiguous",
+      "question": "How many runs did the Royals score in the final?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT season_year, CASE WHEN first_innings_team = 'Rajasthan Royals' THEN first_innings_runs ELSE second_innings_runs END AS royals_runs, CASE WHEN first_innings_team = 'Rajasthan Royals' THEN first_innings_wickets ELSE second_innings_wickets END AS wickets_lost, CASE WHEN first_innings_team = 'Rajasthan Royals' THEN second_innings_team ELSE first_innings_team END AS opponent, winner FROM marts.fct_matches WHERE stage = 'Final' AND (team1 = 'Rajasthan Royals' OR team2 = 'Rajasthan Royals') ORDER BY season_year LIMIT 200",
+      "gold_rows": [
+        [
+          2008,
+          164,
+          7
+        ],
+        [
+          2022,
+          130,
+          9
+        ]
+      ],
+      "rows": [
+        [
+          2008,
+          164,
+          7,
+          "Chennai Super Kings",
+          "Rajasthan Royals"
+        ],
+        [
+          2022,
+          130,
+          9,
+          "Gujarat Titans",
+          "Gujarat Titans"
+        ]
+      ],
+      "latency_ms": 4326
+    },
+    {
+      "id": "h03",
+      "category": "nickname",
+      "question": "How many centuries has the Universe Boss scored in IPL history?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(hundreds) AS centuries FROM marts.mart_batting_season WHERE batter ILIKE '%Gayle%' GROUP BY batter LIMIT 200",
+      "gold_rows": [
+        [
+          "CH Gayle",
+          6.0
+        ]
+      ],
+      "rows": [
+        [
+          "CH Gayle",
+          6.0
+        ]
+      ],
+      "latency_ms": 1959
+    },
+    {
+      "id": "h04",
+      "category": "comparison",
+      "question": "Who has scored more career runs in the IPL, Virat Kohli or Rohit Sharma?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(runs) AS career_runs FROM marts.mart_batting_season WHERE batter IN ('V Kohli', 'RG Sharma') GROUP BY batter ORDER BY career_runs DESC LIMIT 200",
+      "gold_rows": [
+        [
+          "V Kohli",
+          9336.0
+        ],
+        [
+          "RG Sharma",
+          7329.0
+        ]
+      ],
+      "rows": [
+        [
+          "V Kohli",
+          9336.0
+        ],
+        [
+          "RG Sharma",
+          7329.0
+        ]
+      ],
+      "latency_ms": 1660
+    },
+    {
+      "id": "h05",
+      "category": "comparison",
+      "question": "Between Mumbai Indians and Chennai Super Kings, which team has a better head-to-head win record?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT winner, COUNT(*) AS wins FROM marts.fct_matches WHERE ((team1 = 'Mumbai Indians' AND team2 = 'Chennai Super Kings') OR (team1 = 'Chennai Super Kings' AND team2 = 'Mumbai Indians')) AND winner IS NOT NULL GROUP BY winner ORDER BY wins DESC LIMIT 200",
+      "gold_rows": [
+        [
+          "Mumbai Indians",
+          21
+        ],
+        [
+          "Chennai Super Kings",
+          20
+        ]
+      ],
+      "rows": [
+        [
+          "Mumbai Indians",
+          21
+        ],
+        [
+          "Chennai Super Kings",
+          20
+        ]
+      ],
+      "latency_ms": 2491
+    },
+    {
+      "id": "h06",
+      "category": "unanswerable",
+      "question": "\u2022 How many wickets did Don Bradman take in his debut IPL season?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT p.player, p.first_season, SUM(b.wickets) AS debut_season_wickets FROM marts.dim_players AS p LEFT JOIN marts.mart_bowling_phase AS b ON b.bowler = p.player AND b.season_year = p.first_season WHERE p.player ILIKE '%Bradman%' GROUP BY p.player, p.first_season LIMIT 200",
+      "gold_rows": [],
+      "rows": [],
+      "latency_ms": 3426
+    },
+    {
+      "id": "h07",
+      "category": "unanswerable",
+      "question": "Who will win the Orange Cap in the 2030 IPL season?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT 'not answerable: the 2030 season has not happened and the data cannot predict future outcomes' AS answer LIMIT 200",
+      "gold_rows": [],
+      "rows": [
+        [
+          "not answerable: the 2030 season has not happened and the data cannot predict future outcomes"
+        ]
+      ],
+      "latency_ms": 2449
+    },
+    {
+      "id": "h08",
+      "category": "multi_step",
+      "question": "Which player won the Orange Cap in the same season that Sunrisers Hyderabad won their first IPL title, and how many runs did he score?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "WITH s AS (SELECT MIN(season_year) AS season_year FROM marts.mart_team_season WHERE team = 'Sunrisers Hyderabad' AND is_champion) SELECT b.season_year, b.batter, SUM(b.runs) AS runs FROM marts.mart_batting_season AS b JOIN s ON b.season_year = s.season_year GROUP BY b.season_year, b.batter ORDER BY runs DESC LIMIT 3",
+      "gold_rows": [
+        [
+          "V Kohli",
+          973.0
+        ]
+      ],
+      "rows": [
+        [
+          2016,
+          "V Kohli",
+          973.0
+        ],
+        [
+          2016,
+          "DA Warner",
+          848.0
+        ],
+        [
+          2016,
+          "AB de Villiers",
+          687.0
+        ]
+      ],
+      "latency_ms": 3328
+    },
+    {
+      "id": "h09",
+      "category": "multi_step",
+      "question": "Which franchise has hit the most sixes in a single IPL season, and which player hit the most sixes during that campaign?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "WITH team_sixes AS (SELECT season_year, team, SUM(sixes) AS team_sixes FROM marts.mart_batting_season GROUP BY season_year, team), top_team AS (SELECT * FROM team_sixes ORDER BY team_sixes DESC LIMIT 1) SELECT t.team, t.season_year, t.team_sixes, b.batter AS top_six_hitter, b.sixes AS batter_sixes FROM top_team AS t JOIN marts.mart_batting_season AS b ON b.season_year = t.season_year AND b.team = t.team ORDER BY b.sixes DESC LIMIT 1",
+      "gold_rows": [
+        [
+          "Rajasthan Royals",
+          2026,
+          181.0,
+          "V Suryavanshi",
+          72.0
+        ]
+      ],
+      "rows": [
+        [
+          "Rajasthan Royals",
+          2026,
+          181.0,
+          "V Suryavanshi",
+          72.0
+        ]
+      ],
+      "latency_ms": 4378
+    },
+    {
+      "id": "h10",
+      "category": "multi_step",
+      "question": "Which bowler won the Purple Cap in the season that Gujarat Titans won their debut IPL title, and which team did he play for?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT season_year, bowler, team, SUM(wickets) AS wickets, SUM(legal_balls) AS legal_balls, ROUND(SUM(runs_conceded) * 6.0 / SUM(legal_balls), 2) AS economy FROM marts.mart_bowling_phase WHERE season_year = (SELECT MIN(season_year) FROM marts.mart_team_season WHERE team = 'Gujarat Titans' AND is_champion) GROUP BY season_year, bowler, team ORDER BY wickets DESC, economy ASC LIMIT 3",
+      "gold_rows": [
+        [
+          "YS Chahal",
+          "Rajasthan Royals",
+          27.0
+        ]
+      ],
+      "rows": [
+        [
+          2022,
+          "YS Chahal",
+          "Rajasthan Royals",
+          27.0,
+          408.0,
+          7.75
+        ],
+        [
+          2022,
+          "PWH de Silva",
+          "Royal Challengers Bengaluru",
+          26.0,
+          342.0,
+          7.54
+        ],
+        [
+          2022,
+          "K Rabada",
+          "Punjab Kings",
+          23.0,
+          288.0,
+          8.46
+        ]
+      ],
+      "latency_ms": 4919
+    },
+    {
+      "id": "h11",
+      "category": "multi_step",
+      "question": "What was the home stadium of the team that finished as runners-up in the 2023 IPL season, and which city is it located in?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "WITH ru AS (SELECT loser AS team FROM marts.fct_matches WHERE season_year = 2023 AND stage = 'Final') SELECT ru.team, m.venue, m.city, COUNT(*) AS matches_in_2023 FROM ru JOIN marts.fct_matches AS m ON m.season_year = 2023 AND (m.team1 = ru.team OR m.team2 = ru.team) GROUP BY ru.team, m.venue, m.city ORDER BY matches_in_2023 DESC LIMIT 3",
+      "gold_rows": [
+        [
+          "Narendra Modi Stadium",
+          "Ahmedabad",
+          9
+        ]
+      ],
+      "rows": [
+        [
+          "Gujarat Titans",
+          "Narendra Modi Stadium",
+          "Ahmedabad",
+          9
+        ],
+        [
+          "Gujarat Titans",
+          "Ekana Cricket Stadium",
+          "Lucknow",
+          1
+        ],
+        [
+          "Gujarat Titans",
+          "Eden Gardens",
+          "Kolkata",
+          1
+        ]
+      ],
+      "latency_ms": 4473
+    },
+    {
+      "id": "h12",
+      "category": "comparison",
+      "question": "Which bowler has claimed more career wickets in the IPL, Yuzvendra Chahal or Jasprit Bumrah?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT bowler, SUM(wickets) AS career_wickets FROM marts.mart_bowling_phase WHERE bowler IN ('YS Chahal', 'JJ Bumrah') GROUP BY bowler ORDER BY career_wickets DESC LIMIT 200",
+      "gold_rows": [
+        [
+          "YS Chahal",
+          233.0
+        ],
+        [
+          "JJ Bumrah",
+          187.0
+        ]
+      ],
+      "rows": [
+        [
+          "YS Chahal",
+          233.0
+        ],
+        [
+          "JJ Bumrah",
+          187.0
+        ]
+      ],
+      "latency_ms": 2537
+    }
+  ]
+}

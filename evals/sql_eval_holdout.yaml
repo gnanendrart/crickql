@@ -1,0 +1,211 @@
+# Holdout set: written and verified by Gnan, never shown to Claude before a run.
+# Rules: never change the schema, descriptions or examples because of a question in this file.
+# Run once per scorer/schema version: python -m evals.run_sql_eval --file evals/sql_eval_holdout.yaml --label "holdout v1"
+#
+# Format (same as sql_eval.yaml):
+#   - id: h01
+#     category: ambiguous | nickname | comparison | unanswerable | multi_step
+#     verified: true
+#     question: ...
+    #     ordered: true              # only for rankings / "most" / "highest"
+#     gold_sql: |
+#       SELECT ...
+#
+# For a question the data cannot answer, drop gold_sql and add:
+    #     expect: not_answerable
+questions:
+  - id: h01
+    category: unanswerable   # was ambiguous: Cricsheet has no captain field
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Which team did Sharma captain to a title win
+    # ordered: true       # uncomment for rankings / most / highest
+    expect: not_answerable
+    
+  - id: h02
+    category: ambiguous        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: How many runs did the Royals score in the final?
+    # ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      SELECT
+      season_year,
+      CASE WHEN first_innings_team = 'Rajasthan Royals'
+           THEN first_innings_runs ELSE second_innings_runs END AS runs,
+      CASE WHEN first_innings_team = 'Rajasthan Royals'
+           THEN first_innings_wickets ELSE second_innings_wickets END AS wickets
+      FROM marts.fct_matches
+      WHERE stage = 'Final'
+      AND 'Rajasthan Royals' IN (team1, team2)
+      ORDER BY season_year
+
+  - id: h03
+    category: nickname        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: How many centuries has the Universe Boss scored in IPL history?
+    # ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      SELECT 
+      batter,
+      SUM(hundreds) AS total_centuries
+      FROM marts.mart_batting_season
+      WHERE batter = 'CH Gayle'
+      GROUP BY batter;
+
+  - id: h04
+    category: comparison        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Who has scored more career runs in the IPL, Virat Kohli or Rohit Sharma?
+    ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      SELECT 
+      batter,
+      SUM(runs) AS career_runs
+      FROM marts.mart_batting_season
+      WHERE batter IN ('V Kohli', 'RG Sharma')
+      GROUP BY batter
+      ORDER BY career_runs DESC;
+
+  - id: h05
+    category: comparison        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Between Mumbai Indians and Chennai Super Kings, which team has a better head-to-head win record?
+    ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      SELECT 
+      winner,
+      COUNT(*) AS wins
+      FROM marts.fct_matches
+      WHERE ((team1 = 'Mumbai Indians' AND team2 = 'Chennai Super Kings')
+      OR (team1 = 'Chennai Super Kings' AND team2 = 'Mumbai Indians'))
+      AND winner IS NOT NULL
+      GROUP BY winner
+      ORDER BY wins DESC;
+
+  - id: h06
+    category: unanswerable        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: • How many wickets did Don Bradman take in his debut IPL season?
+    # ordered: true       # uncomment for rankings / most / highest
+    expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+
+  - id: h07
+    category: unanswerable        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Who will win the Orange Cap in the 2030 IPL season?
+    # ordered: true       # uncomment for rankings / most / highest
+    expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+
+  - id: h08
+    category: multi_step        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Which player won the Orange Cap in the same season that Sunrisers Hyderabad won their first IPL title, and how many runs did he score?
+    ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      WITH srh_first_title AS (
+      SELECT MIN(season_year) AS title_year
+      FROM marts.mart_team_season
+      WHERE team = 'Sunrisers Hyderabad'
+        AND is_champion = TRUE)
+      SELECT 
+      b.batter,
+      SUM(b.runs) AS total_runs
+      FROM marts.mart_batting_season b
+      JOIN srh_first_title s ON b.season_year = s.title_year
+      GROUP BY b.batter
+      ORDER BY total_runs DESC
+      LIMIT 1;
+
+  - id: h09
+    category: multi_step   #  ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Which franchise has hit the most sixes in a single IPL season, and which player hit the most sixes during that campaign?
+    ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      WITH top_team_season AS (
+      SELECT 
+          team,
+          season_year,
+          SUM(sixes) AS team_sixes
+      FROM marts.mart_batting_season
+      GROUP BY team, season_year
+      ORDER BY team_sixes DESC
+      LIMIT 1)
+      SELECT 
+      t.team AS franchise,
+      t.season_year,
+      t.team_sixes,
+      b.batter AS top_six_hitter,
+      b.sixes AS player_sixes
+      FROM top_team_season t
+      JOIN marts.mart_batting_season b 
+      ON b.team = t.team 
+      AND b.season_year = t.season_year
+      ORDER BY b.sixes DESC
+      LIMIT 1;
+
+  - id: h10
+    category: multi_step        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Which bowler won the Purple Cap in the season that Gujarat Titans won their debut IPL title, and which team did he play for?
+    ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      WITH gt_debut_title AS (
+      SELECT MIN(season_year) AS title_year
+      FROM marts.mart_team_season
+      WHERE team = 'Gujarat Titans'
+        AND is_champion = TRUE)
+      SELECT 
+      p.bowler,
+      p.team,
+      SUM(p.wickets) AS season_wickets
+      FROM marts.mart_bowling_phase p
+      JOIN gt_debut_title g ON p.season_year = g.title_year
+      GROUP BY p.bowler, p.team
+      ORDER BY season_wickets DESC
+      LIMIT 1;
+
+  - id: h11
+    category: multi_step        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: What was the home stadium of the team that finished as runners-up in the 2023 IPL season, and which city is it located in?
+    ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      WITH runner_up_2023 AS (
+      SELECT loser AS team
+      FROM marts.fct_matches
+      WHERE season_year = 2023
+        AND stage = 'Final')
+      SELECT 
+      v.venue AS home_stadium,
+      v.city,
+      COUNT(*) AS matches_played_there
+      FROM marts.fct_matches m
+      JOIN runner_up_2023 r ON (m.team1 = r.team OR m.team2 = r.team)
+      JOIN marts.dim_venues v ON m.venue = v.venue
+      WHERE m.season_year = 2023
+      GROUP BY v.venue, v.city
+      ORDER BY matches_played_there DESC
+      LIMIT 1;
+
+  - id: h12
+    category: comparison        # ambiguous | nickname | comparison | unanswerable | multi_step
+    verified: true       # set true after you run gold_sql in psql and check it
+    question: Which bowler has claimed more career wickets in the IPL, Yuzvendra Chahal or Jasprit Bumrah?
+    ordered: true       # uncomment for rankings / most / highest
+    # expect: not_answerable   # use instead of gold_sql if the data cannot answer it
+    gold_sql: |
+      SELECT 
+      bowler,
+      SUM(wickets) AS career_wickets
+      FROM marts.mart_bowling_phase
+      WHERE bowler IN ('YS Chahal', 'JJ Bumrah')
+      GROUP BY bowler
+      ORDER BY career_wickets DESC;

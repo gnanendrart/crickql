@@ -17,7 +17,11 @@ Matching rule (stated so the number means something):
 Results: a summary row appended to evals/results.md and full detail in evals/runs/<ts>.json.
 Never edit results.md by hand: every number in it must come from a run.
 
+Unanswerable questions: set `expect: not_answerable` and leave out gold_sql. The answer is
+correct when the agent returns its "not answerable: <reason>" row.
+
 Run: python -m evals.run_sql_eval [--only q01 q02] [--label "baseline"]
+     python -m evals.run_sql_eval --file evals/sql_eval_holdout.yaml --label "holdout v1"
 """
 
 from __future__ import annotations
@@ -93,21 +97,34 @@ def results_match(gold_rows: list[list], gen_rows: list[list], ordered: bool = F
     return gold_set == gen_set
 
 
+def is_not_answerable(rows: list[list]) -> bool:
+    return (len(rows) == 1 and len(rows[0]) >= 1 and isinstance(rows[0][0], str)
+            and rows[0][0].strip().lower().startswith("not answerable"))
+
+
 def run(only: list[str] | None = None, label: str = "", agent=ask, conn_factory=reader_conn,
-        write: bool = True) -> dict:
-    questions = yaml.safe_load(EVAL_FILE.read_text())["questions"]
+        write: bool = True, eval_file: Path = EVAL_FILE) -> dict:
+    questions = yaml.safe_load(Path(eval_file).read_text())["questions"]
+    if Path(eval_file).resolve() != EVAL_FILE.resolve():
+        label = f"[{Path(eval_file).stem}] {label}".strip()
     if only:
         questions = [q for q in questions if q["id"] in only]
     allowed = table_names()
     details = []
     for q in questions:
-        _, gold_rows = execute(check_sql(q["gold_sql"], allowed), conn_factory)
+        unanswerable = q.get("expect") == "not_answerable"
+        gold_rows = [] if unanswerable else execute(check_sql(q["gold_sql"], allowed),
+                                                    conn_factory)[1]
         started = time.perf_counter()
         try:
             out = agent(q["question"], conn_factory=conn_factory)
         except Exception as e:  # an API error counts as a miss, not a crash of the whole run
             out = {"ok": False, "rows": [], "attempts": [], "error": f"{type(e).__name__}: {e}"}
-        correct = bool(out["ok"]) and results_match(gold_rows, out["rows"], q.get("ordered", False))
+        if unanswerable:
+            correct = is_not_answerable(out.get("rows", []))
+        else:
+            correct = (bool(out["ok"]) and not is_not_answerable(out.get("rows", []))
+                       and results_match(gold_rows, out["rows"], q.get("ordered", False)))
         details.append({
             "id": q["id"], "category": q.get("category"), "question": q["question"],
             "verified": q.get("verified", False), "correct": correct,
@@ -150,9 +167,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--only", nargs="+", help="question ids to run")
     parser.add_argument("--label", default="", help="short note for this run, e.g. 'baseline'")
+    parser.add_argument("--file", default=str(EVAL_FILE), help="question file (default: main set)")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    s = run(args.only, args.label)
+    s = run(args.only, args.label, eval_file=Path(args.file))
     print(json.dumps(s, indent=2))
     if s["unverified_gold"]:
         print(f"\nWARNING: {s['unverified_gold']} gold queries are not verified yet. "

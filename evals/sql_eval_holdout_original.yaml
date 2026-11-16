@@ -1,0 +1,53 @@
+# Holdout set: written and verified by Gnan, never shown to Claude before a run.
+# Rules: never change the schema, descriptions or examples because of a question in this file.
+# Run once per scorer/schema version: python -m evals.run_sql_eval --file evals/sql_eval_holdout.yaml --label "holdout v1"
+#
+# Format (same as sql_eval.yaml):
+#   - id: h01
+#     category: ambiguous | nickname | comparison | unanswerable | multi_step
+#     verified: true
+#     question: ...
+#     ordered: true              # only for rankings / "most" / "highest"
+#     gold_sql: |
+#       SELECT ...
+#
+# For a question the data cannot answer, drop gold_sql and add:
+#     expect: not_answerable
+questions:
+	- id: h01
+	question: Which team did Sharma captain to a title win
+	
+	-id: h02
+	question: How many runs did the Royals score in the final?
+	
+	-id: h03
+	question: How many centuries has the Universe Boss scored in IPL history?
+	
+	-id: h04
+	question: Who has scored more career runs in the IPL, Virat Kohli or Rohit Sharma?
+	
+	-id: h05
+	question: Between Mumbai Indians and Chennai Super Kings, which team has a better head-to-head win record?
+	
+	-id: h06
+	question: • How many wickets did Don Bradman take in his debut IPL season?
+	
+	-id: h07
+	question: Who will win the Orange Cap in the 2030 IPL season?
+	
+	-id: h08
+	question: Which player won the Orange Cap in the same season that Sunrisers Hyderabad won their first IPL title, and how many runs did he score?
+	
+	-id: h09
+	question: Who was the captain of the team that defeated Royal Challengers Bangalore in the 2016 IPL final, and which country does he represent internationally?
+	
+	-id: h10
+	question: Which bowler won the Purple Cap in the season that Gujarat Titans won their debut IPL title, and which team did he play for?
+	
+	-id: h11
+	question: What was the home stadium of the team that finished as runners-up in the 2023 IPL season, and which city is it located in?
+	
+	-id: h12
+	question: Which bowler has claimed more career wickets in the IPL, Yuzvendra Chahal or Jasprit Bumrah?
+	
+	
