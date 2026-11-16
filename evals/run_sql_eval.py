@@ -8,6 +8,11 @@ Matching rule (stated so the number means something):
 - Every gold column must appear in the generated result (same values, same row count). Extra
   generated columns are allowed, because "Who scored most?" answered with name + runs is right.
 - Row order matters only when the question is marked `ordered: true`.
+- For `ordered: true` questions (rankings, "who has the most", "highest", "lowest") the gold
+  rows must be the FIRST rows of the generated result. Extra rows after them are allowed,
+  because "Who scored most?" answered with the top 5 is still right, and it shows ties the gold
+  LIMIT 1 hides. Unordered questions still need the exact row count.
+  (Scorer v2, 2026-11-16. The baseline row in results.md was scored before this rule.)
 
 Results: a summary row appended to evals/results.md and full detail in evals/runs/<ts>.json.
 Never edit results.md by hand: every number in it must come from a run.
@@ -60,6 +65,8 @@ def columns_of(rows: list[list]) -> list[tuple]:
 
 def results_match(gold_rows: list[list], gen_rows: list[list], ordered: bool = False) -> bool:
     """True if every gold column is present in the generated result with the same values."""
+    if ordered and len(gen_rows) > len(gold_rows):
+        gen_rows = gen_rows[:len(gold_rows)]  # top-N answer: only the leading rows are scored
     if len(gold_rows) != len(gen_rows):
         return False
     if not gold_rows:

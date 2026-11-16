@@ -159,7 +159,9 @@ models:
       - name: runs_total
         description: All runs from the ball, runs_batter + runs_extras. Sum this for team totals.
       - name: extras_wides
-        description: Wide runs on this ball.
+        description: >
+          Wide runs on this ball (0 if not a wide; can be 2-5 when a wide runs away). To count
+          wides bowled, count rows where extras_wides > 0, do not SUM this column.
       - name: extras_noballs
         description: No-ball runs on this ball.
       - name: extras_byes
@@ -331,7 +333,13 @@ models:
       - name: sixes_conceded
         description: Sixes hit off the bowler.
       - name: wides
-        description: Wide runs conceded.
+        description: >
+          Wide RUNS conceded, not the number of wides bowled (one wide that runs to the
+          boundary adds 5). For "how many wides did X bowl", use wide_balls.
+      - name: wide_balls
+        description: >
+          Number of wide deliveries bowled. Use this for "how many wides" or "most wides"
+          questions.
       - name: noballs
         description: No-ball runs conceded.
       - name: economy

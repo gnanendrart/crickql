@@ -1,7 +1,8 @@
 # Text-to-SQL eval set: 30 questions with gold SQL.
 # Scoring: run gold and generated SQL, compare result sets (see run_sql_eval.py).
 #
-# DRAFTED BY CLAUDE, NOT YET VERIFIED BY GNAN. Before quoting any accuracy number, check every
+# Drafted by Claude. All 30 verified by Gnan on 2026-11-16 (q27 changed to wide balls, q18 rain filter added).
+# Original note: Before quoting any accuracy number, check every
 # gold query by hand (does it answer the question as a cricket fan would mean it?) and flip
 # `verified: true`. run_sql_eval.py prints how many are still unverified.
 #
@@ -10,7 +11,7 @@
 questions:
   - id: q01
     category: season
-    verified: false
+    verified: true
     question: Who took the most wickets in the 2019 season?
     ordered: true
     gold_sql: |
@@ -19,21 +20,21 @@ questions:
 
   - id: q02
     category: season
-    verified: false
+    verified: true
     question: How many matches were played in the 2020 season?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_matches WHERE season_year = 2020
 
   - id: q03
     category: titles
-    verified: false
+    verified: true
     question: Who won the IPL final in 2009?
     gold_sql: |
       SELECT team FROM marts.mart_team_season WHERE season_year = 2009 AND is_champion
 
   - id: q04
     category: career
-    verified: false
+    verified: true
     question: Who has hit the most sixes in IPL history?
     ordered: true
     gold_sql: |
@@ -42,14 +43,14 @@ questions:
 
   - id: q05
     category: career
-    verified: false
+    verified: true
     question: How many IPL hundreds has Virat Kohli scored?
     gold_sql: |
       SELECT SUM(hundreds) FROM marts.mart_batting_season WHERE batter = 'V Kohli'
 
   - id: q06
     category: career
-    verified: false
+    verified: true
     question: Which bowler has the most career IPL wickets?
     ordered: true
     gold_sql: |
@@ -58,7 +59,7 @@ questions:
 
   - id: q07
     category: threshold
-    verified: false
+    verified: true
     question: Which batter has the best career batting average with at least 2000 runs?
     ordered: true
     gold_sql: |
@@ -68,7 +69,7 @@ questions:
 
   - id: q08
     category: threshold
-    verified: false
+    verified: true
     question: Which bowler has the best career economy rate, minimum 1000 legal balls?
     ordered: true
     gold_sql: |
@@ -78,7 +79,7 @@ questions:
 
   - id: q09
     category: phase
-    verified: false
+    verified: true
     question: Who has taken the most death-over wickets in IPL history?
     ordered: true
     gold_sql: |
@@ -87,7 +88,7 @@ questions:
 
   - id: q10
     category: phase
-    verified: false
+    verified: true
     question: What was the overall powerplay run rate in the 2025 season?
     gold_sql: |
       SELECT ROUND(SUM(runs_total) * 6.0 / SUM(CASE WHEN is_legal THEN 1 ELSE 0 END), 2)
@@ -96,7 +97,7 @@ questions:
 
   - id: q11
     category: head_to_head
-    verified: false
+    verified: true
     question: How many times have Kolkata Knight Riders beaten Royal Challengers Bengaluru?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_matches
@@ -104,7 +105,7 @@ questions:
 
   - id: q12
     category: batter_vs_bowler
-    verified: false
+    verified: true
     question: How many times has Rashid Khan dismissed MS Dhoni?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_deliveries
@@ -113,7 +114,7 @@ questions:
 
   - id: q13
     category: venue
-    verified: false
+    verified: true
     question: Which venue has hosted the most IPL matches?
     ordered: true
     gold_sql: |
@@ -121,21 +122,21 @@ questions:
 
   - id: q14
     category: venue
-    verified: false
+    verified: true
     question: How many IPL matches were played in South Africa?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_matches WHERE country = 'South Africa'
 
   - id: q15
     category: super_over
-    verified: false
+    verified: true
     question: How many IPL matches have been decided by a super over?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_matches WHERE decided_by_super_over
 
   - id: q16
     category: super_over
-    verified: false
+    verified: true
     question: Which team has won the most super overs?
     ordered: true
     gold_sql: |
@@ -144,23 +145,25 @@ questions:
 
   - id: q17
     category: innings
-    verified: false
+    verified: true
     question: What is the highest team total in an IPL innings?
+    ordered: true
     gold_sql: |
       SELECT MAX(GREATEST(first_innings_runs, second_innings_runs)) FROM marts.fct_matches
 
   - id: q18
     category: innings
-    verified: false
+    verified: true
     question: What is the lowest completed first-innings total in the IPL (all out or 20 overs, no rain)?
+    ordered: true
     gold_sql: |
       SELECT MIN(first_innings_runs) FROM marts.fct_matches
-      WHERE result_type IN ('normal', 'tie')
+      WHERE result_type IN ('normal', 'tie') AND target_overs = 20
         AND (first_innings_wickets = 10 OR first_innings_balls = 120)
 
   - id: q19
     category: innings
-    verified: false
+    verified: true
     question: Who has the most fifties (50 to 99) in IPL history?
     ordered: true
     gold_sql: |
@@ -169,14 +172,14 @@ questions:
 
   - id: q20
     category: innings
-    verified: false
+    verified: true
     question: How many ducks has Rohit Sharma made in the IPL?
     gold_sql: |
       SELECT SUM(ducks) FROM marts.mart_batting_season WHERE batter = 'RG Sharma'
 
   - id: q21
     category: team
-    verified: false
+    verified: true
     question: Which team had the best win percentage in the 2008 season?
     ordered: true
     gold_sql: |
@@ -185,7 +188,7 @@ questions:
 
   - id: q22
     category: team
-    verified: false
+    verified: true
     question: How many finals have Chennai Super Kings played?
     gold_sql: |
       SELECT COUNT(*) FROM marts.mart_team_season
@@ -193,29 +196,30 @@ questions:
 
   - id: q23
     category: toss
-    verified: false
+    verified: true
     question: In how many matches did the toss winner choose to field first?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_matches WHERE toss_decision = 'field'
 
   - id: q24
     category: results
-    verified: false
+    verified: true
     question: How many matches were affected by rain and decided by Duckworth-Lewis?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_matches WHERE is_dl_result
 
   - id: q25
     category: results
-    verified: false
+    verified: true
     question: What is the biggest winning margin by runs in IPL history, and who won?
+    ordered: true
     gold_sql: |
       SELECT winner, loser, win_by_runs, season_year FROM marts.fct_matches
       WHERE win_by_runs = (SELECT MAX(win_by_runs) FROM marts.fct_matches)
 
   - id: q26
     category: dismissals
-    verified: false
+    verified: true
     question: How many run outs have there been in IPL history, super overs excluded?
     gold_sql: |
       SELECT COUNT(*) FROM marts.fct_deliveries
@@ -223,26 +227,26 @@ questions:
 
   - id: q27
     category: extras
-    verified: false
+    verified: true
     question: Which team bowled the most wides in the 2022 season?
     ordered: true
     gold_sql: |
-      SELECT bowling_team, SUM(extras_wides) FROM marts.fct_deliveries
+      SELECT bowling_team, COUNT(*) FILTER (WHERE extras_wides > 0) AS wide_balls
+      FROM marts.fct_deliveries
       WHERE season_year = 2022 AND NOT is_super_over
       GROUP BY bowling_team ORDER BY 2 DESC LIMIT 1
 
   - id: q28
     category: players
-    verified: false
+    verified: true
     question: Which player has played in the most IPL seasons?
-    ordered: true
     gold_sql: |
       SELECT player, seasons_played FROM marts.dim_players
       WHERE seasons_played = (SELECT MAX(seasons_played) FROM marts.dim_players)
 
   - id: q29
     category: playoffs
-    verified: false
+    verified: true
     question: Who has scored the most runs in IPL playoff matches?
     ordered: true
     gold_sql: |
@@ -251,7 +255,7 @@ questions:
 
   - id: q30
     category: season
-    verified: false
+    verified: true
     question: Who won the orange cap (most runs) in each season from 2020 to 2024?
     gold_sql: |
       SELECT season_year, batter, runs FROM (

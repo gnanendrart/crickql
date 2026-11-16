@@ -1,0 +1,9 @@
+# Eval results
+
+Every row below was written by an eval script. Never by hand.
+
+## Text-to-SQL (execution accuracy)
+
+| Run | Label | Model | Correct | Accuracy | Recovered by retry | Unverified gold | Failed |
+|---|---|---|---|---|---|---|---|
+| 2026-11-16 15:52 UTC | baseline | claude-sonnet-5-5 | 14/30 | 46.7% | 0 | 0 | q01, q04, q06, q07, q08, q09, q13, q16, q17, q18, q19, q21, q25, q27, q28, q29 |

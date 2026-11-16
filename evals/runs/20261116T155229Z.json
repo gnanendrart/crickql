@@ -1,0 +1,1160 @@
+{
+  "summary": {
+    "timestamp": "2026-11-16 15:52 UTC",
+    "label": "baseline",
+    "model": "claude-sonnet-5-5",
+    "questions": 30,
+    "correct": 14,
+    "accuracy_pct": 46.7,
+    "unverified_gold": 0,
+    "recovered_by_retry": 0,
+    "failed_ids": [
+      "q01",
+      "q04",
+      "q06",
+      "q07",
+      "q08",
+      "q09",
+      "q13",
+      "q16",
+      "q17",
+      "q18",
+      "q19",
+      "q21",
+      "q25",
+      "q27",
+      "q28",
+      "q29"
+    ]
+  },
+  "details": [
+    {
+      "id": "q01",
+      "category": "season",
+      "question": "Who took the most wickets in the 2019 season?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT bowler, SUM(wickets) AS wickets, SUM(legal_balls) AS legal_balls FROM marts.mart_bowling_phase WHERE season_year = 2019 GROUP BY bowler ORDER BY wickets DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "Imran Tahir",
+          26.0
+        ]
+      ],
+      "rows": [
+        [
+          "Imran Tahir",
+          26.0,
+          386.0
+        ],
+        [
+          "K Rabada",
+          25.0,
+          282.0
+        ],
+        [
+          "DL Chahar",
+          22.0,
+          387.0
+        ],
+        [
+          "S Gopal",
+          20.0,
+          288.0
+        ],
+        [
+          "Mohammed Shami",
+          19.0,
+          324.0
+        ]
+      ],
+      "latency_ms": 3189
+    },
+    {
+      "id": "q02",
+      "category": "season",
+      "question": "How many matches were played in the 2020 season?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS matches FROM marts.fct_matches WHERE season_year = 2020 LIMIT 200",
+      "gold_rows": [
+        [
+          60
+        ]
+      ],
+      "rows": [
+        [
+          60
+        ]
+      ],
+      "latency_ms": 1432
+    },
+    {
+      "id": "q03",
+      "category": "titles",
+      "question": "Who won the IPL final in 2009?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT team FROM marts.mart_team_season WHERE season_year = 2009 AND is_champion LIMIT 200",
+      "gold_rows": [
+        [
+          "Deccan Chargers"
+        ]
+      ],
+      "rows": [
+        [
+          "Deccan Chargers"
+        ]
+      ],
+      "latency_ms": 2477
+    },
+    {
+      "id": "q04",
+      "category": "career",
+      "question": "Who has hit the most sixes in IPL history?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(sixes) AS career_sixes FROM marts.mart_batting_season GROUP BY batter ORDER BY career_sixes DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "CH Gayle",
+          357.0
+        ]
+      ],
+      "rows": [
+        [
+          "CH Gayle",
+          357.0
+        ],
+        [
+          "RG Sharma",
+          323.0
+        ],
+        [
+          "V Kohli",
+          316.0
+        ],
+        [
+          "MS Dhoni",
+          264.0
+        ],
+        [
+          "AB de Villiers",
+          251.0
+        ]
+      ],
+      "latency_ms": 1977
+    },
+    {
+      "id": "q05",
+      "category": "career",
+      "question": "How many IPL hundreds has Virat Kohli scored?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(hundreds) AS hundreds FROM marts.mart_batting_season WHERE batter = 'V Kohli' GROUP BY batter LIMIT 200",
+      "gold_rows": [
+        [
+          9.0
+        ]
+      ],
+      "rows": [
+        [
+          "V Kohli",
+          9.0
+        ]
+      ],
+      "latency_ms": 2080
+    },
+    {
+      "id": "q06",
+      "category": "career",
+      "question": "Which bowler has the most career IPL wickets?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT bowler, SUM(wickets) AS career_wickets FROM marts.mart_bowling_phase GROUP BY bowler ORDER BY career_wickets DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "YS Chahal",
+          233.0
+        ]
+      ],
+      "rows": [
+        [
+          "YS Chahal",
+          233.0
+        ],
+        [
+          "B Kumar",
+          226.0
+        ],
+        [
+          "SP Narine",
+          207.0
+        ],
+        [
+          "PP Chawla",
+          192.0
+        ],
+        [
+          "JJ Bumrah",
+          187.0
+        ]
+      ],
+      "latency_ms": 1763
+    },
+    {
+      "id": "q07",
+      "category": "threshold",
+      "question": "Which batter has the best career batting average with at least 2000 runs?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(runs) AS career_runs, SUM(dismissals) AS dismissals, ROUND(SUM(runs) * 1.0 / NULLIF(SUM(dismissals), 0), 2) AS batting_average FROM marts.mart_batting_season GROUP BY batter HAVING SUM(runs) >= 2000 ORDER BY batting_average DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "B Sai Sudharsan",
+          48.37
+        ]
+      ],
+      "rows": [
+        [
+          "B Sai Sudharsan",
+          2515.0,
+          52.0,
+          48.37
+        ],
+        [
+          "KL Rahul",
+          5815.0,
+          126.0,
+          46.15
+        ],
+        [
+          "H Klaasen",
+          2104.0,
+          50.0,
+          42.08
+        ],
+        [
+          "DA Warner",
+          6565.0,
+          162.0,
+          40.52
+        ],
+        [
+          "V Kohli",
+          9336.0,
+          231.0,
+          40.42
+        ]
+      ],
+      "latency_ms": 2182
+    },
+    {
+      "id": "q08",
+      "category": "threshold",
+      "question": "Which bowler has the best career economy rate, minimum 1000 legal balls?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT bowler, SUM(legal_balls) AS legal_balls, SUM(runs_conceded) AS runs_conceded, ROUND(SUM(runs_conceded) * 6.0 / SUM(legal_balls), 2) AS economy FROM marts.mart_bowling_phase GROUP BY bowler HAVING SUM(legal_balls) >= 1000 ORDER BY SUM(runs_conceded) * 6.0 / SUM(legal_balls) LIMIT 5",
+      "gold_rows": [
+        [
+          "M Muralitharan",
+          6.68
+        ]
+      ],
+      "rows": [
+        [
+          "M Muralitharan",
+          1524.0,
+          1696.0,
+          6.68
+        ],
+        [
+          "SP Narine",
+          4651.0,
+          5261.0,
+          6.79
+        ],
+        [
+          "DW Steyn",
+          2176.0,
+          2508.0,
+          6.92
+        ],
+        [
+          "Harbhajan Singh",
+          3416.0,
+          4030.0,
+          7.08
+        ],
+        [
+          "SL Malinga",
+          2827.0,
+          3366.0,
+          7.14
+        ]
+      ],
+      "latency_ms": 2344
+    },
+    {
+      "id": "q09",
+      "category": "phase",
+      "question": "Who has taken the most death-over wickets in IPL history?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT bowler, SUM(wickets) AS death_wickets, SUM(legal_balls) AS legal_balls FROM marts.mart_bowling_phase WHERE phase = 'death' GROUP BY bowler ORDER BY death_wickets DESC LIMIT 10",
+      "gold_rows": [
+        [
+          "B Kumar",
+          118.0
+        ]
+      ],
+      "rows": [
+        [
+          "B Kumar",
+          118.0,
+          1605.0
+        ],
+        [
+          "DJ Bravo",
+          115.0,
+          1385.0
+        ],
+        [
+          "SL Malinga",
+          108.0,
+          1117.0
+        ],
+        [
+          "JJ Bumrah",
+          102.0,
+          1423.0
+        ],
+        [
+          "SP Narine",
+          84.0,
+          1105.0
+        ]
+      ],
+      "latency_ms": 1964
+    },
+    {
+      "id": "q10",
+      "category": "phase",
+      "question": "What was the overall powerplay run rate in the 2025 season?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT SUM(runs_total) AS powerplay_runs, SUM(CASE WHEN is_legal THEN 1 ELSE 0 END) AS legal_balls, ROUND(SUM(runs_total) * 6.0 / SUM(CASE WHEN is_legal THEN 1 ELSE 0 END), 2) AS run_rate FROM marts.fct_deliveries WHERE season_year = 2025 AND phase = 'powerplay' AND NOT is_super_over LIMIT 200",
+      "gold_rows": [
+        [
+          9.61
+        ]
+      ],
+      "rows": [
+        [
+          8370,
+          5226,
+          9.61
+        ]
+      ],
+      "latency_ms": 2872
+    },
+    {
+      "id": "q11",
+      "category": "head_to_head",
+      "question": "How many times have Kolkata Knight Riders beaten Royal Challengers Bengaluru?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS kkr_wins FROM marts.fct_matches WHERE winner = 'Kolkata Knight Riders' AND loser = 'Royal Challengers Bengaluru' LIMIT 200",
+      "gold_rows": [
+        [
+          20
+        ]
+      ],
+      "rows": [
+        [
+          20
+        ]
+      ],
+      "latency_ms": 2977
+    },
+    {
+      "id": "q12",
+      "category": "batter_vs_bowler",
+      "question": "How many times has Rashid Khan dismissed MS Dhoni?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, bowler, COUNT(*) AS dismissals FROM marts.fct_deliveries WHERE batter = 'MS Dhoni' AND bowler = 'Rashid Khan' AND NOT is_super_over AND is_bowler_wicket AND player_out = batter GROUP BY batter, bowler LIMIT 200",
+      "gold_rows": [
+        [
+          1
+        ]
+      ],
+      "rows": [
+        [
+          "MS Dhoni",
+          "Rashid Khan",
+          1
+        ]
+      ],
+      "latency_ms": 2149
+    },
+    {
+      "id": "q13",
+      "category": "venue",
+      "question": "Which venue has hosted the most IPL matches?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT venue, city, matches FROM marts.dim_venues ORDER BY matches DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "Wankhede Stadium",
+          132
+        ]
+      ],
+      "rows": [
+        [
+          "Wankhede Stadium",
+          "Mumbai",
+          132
+        ],
+        [
+          "Eden Gardens",
+          "Kolkata",
+          107
+        ],
+        [
+          "Arun Jaitley Stadium",
+          "Delhi",
+          104
+        ],
+        [
+          "M Chinnaswamy Stadium",
+          "Bengaluru",
+          104
+        ],
+        [
+          "MA Chidambaram Stadium",
+          "Chennai",
+          98
+        ]
+      ],
+      "latency_ms": 2288
+    },
+    {
+      "id": "q14",
+      "category": "venue",
+      "question": "How many IPL matches were played in South Africa?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS matches FROM marts.fct_matches WHERE country = 'South Africa' LIMIT 200",
+      "gold_rows": [
+        [
+          57
+        ]
+      ],
+      "rows": [
+        [
+          57
+        ]
+      ],
+      "latency_ms": 1816
+    },
+    {
+      "id": "q15",
+      "category": "super_over",
+      "question": "How many IPL matches have been decided by a super over?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS super_over_matches FROM marts.fct_matches WHERE decided_by_super_over LIMIT 200",
+      "gold_rows": [
+        [
+          16
+        ]
+      ],
+      "rows": [
+        [
+          16
+        ]
+      ],
+      "latency_ms": 1717
+    },
+    {
+      "id": "q16",
+      "category": "super_over",
+      "question": "Which team has won the most super overs?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT team, SUM(super_over_wins) AS super_over_wins, SUM(super_over_losses) AS super_over_losses FROM marts.mart_team_season GROUP BY team ORDER BY super_over_wins DESC LIMIT 10",
+      "gold_rows": [
+        [
+          "Delhi Capitals",
+          4.0
+        ]
+      ],
+      "rows": [
+        [
+          "Delhi Capitals",
+          4.0,
+          1.0
+        ],
+        [
+          "Punjab Kings",
+          3.0,
+          1.0
+        ],
+        [
+          "Royal Challengers Bengaluru",
+          2.0,
+          1.0
+        ],
+        [
+          "Mumbai Indians",
+          2.0,
+          2.0
+        ],
+        [
+          "Kolkata Knight Riders",
+          2.0,
+          3.0
+        ]
+      ],
+      "latency_ms": 1829
+    },
+    {
+      "id": "q17",
+      "category": "innings",
+      "question": "What is the highest team total in an IPL innings?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT team, opposition, runs, wickets, season_year, match_date, venue FROM (SELECT first_innings_team AS team, CASE WHEN first_innings_team = team1 THEN team2 ELSE team1 END AS opposition, first_innings_runs AS runs, first_innings_wickets AS wickets, season_year, match_date, venue FROM marts.fct_matches UNION ALL SELECT second_innings_team, CASE WHEN second_innings_team = team1 THEN team2 ELSE team1 END, second_innings_runs, second_innings_wickets, season_year, match_date, venue FROM marts.fct_matches) AS t WHERE runs IS NOT NULL ORDER BY runs DESC LIMIT 5",
+      "gold_rows": [
+        [
+          287
+        ]
+      ],
+      "rows": [
+        [
+          "Sunrisers Hyderabad",
+          "Royal Challengers Bengaluru",
+          287,
+          3,
+          2024,
+          "2024-04-15",
+          "M Chinnaswamy Stadium"
+        ],
+        [
+          "Sunrisers Hyderabad",
+          "Rajasthan Royals",
+          286,
+          6,
+          2025,
+          "2025-03-23",
+          "Rajiv Gandhi International Stadium"
+        ],
+        [
+          "Sunrisers Hyderabad",
+          "Kolkata Knight Riders",
+          278,
+          3,
+          2025,
+          "2025-05-25",
+          "Arun Jaitley Stadium"
+        ],
+        [
+          "Sunrisers Hyderabad",
+          "Mumbai Indians",
+          277,
+          3,
+          2024,
+          "2024-03-27",
+          "Rajiv Gandhi International Stadium"
+        ],
+        [
+          "Kolkata Knight Riders",
+          "Delhi Capitals",
+          272,
+          7,
+          2024,
+          "2024-04-03",
+          "ACA-VDCA Stadium"
+        ]
+      ],
+      "latency_ms": 2941
+    },
+    {
+      "id": "q18",
+      "category": "innings",
+      "question": "What is the lowest completed first-innings total in the IPL (all out or 20 overs, no rain)?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT match_date, season_year, first_innings_team, second_innings_team AS opposition, first_innings_runs, first_innings_wickets, first_innings_balls, venue FROM marts.fct_matches WHERE first_innings_runs IS NOT NULL AND (first_innings_wickets >= 10 OR first_innings_balls >= 120) AND NOT is_dl_result AND result_type <> 'dl' ORDER BY first_innings_runs ASC, match_date LIMIT 5",
+      "gold_rows": [
+        [
+          67
+        ]
+      ],
+      "rows": [
+        [
+          "2008-05-16",
+          2008,
+          "Kolkata Knight Riders",
+          "Mumbai Indians",
+          67,
+          10,
+          92,
+          "Wankhede Stadium"
+        ],
+        [
+          "2017-04-30",
+          2017,
+          "Delhi Capitals",
+          "Punjab Kings",
+          67,
+          10,
+          103,
+          "Punjab Cricket Association IS Bindra Stadium"
+        ],
+        [
+          "2022-04-23",
+          2022,
+          "Royal Challengers Bengaluru",
+          "Sunrisers Hyderabad",
+          68,
+          10,
+          97,
+          "Brabourne Stadium"
+        ],
+        [
+          "2014-04-26",
+          2014,
+          "Royal Challengers Bengaluru",
+          "Rajasthan Royals",
+          70,
+          10,
+          90,
+          "Sheikh Zayed Stadium"
+        ],
+        [
+          "2019-03-23",
+          2019,
+          "Royal Challengers Bengaluru",
+          "Chennai Super Kings",
+          70,
+          10,
+          103,
+          "MA Chidambaram Stadium"
+        ]
+      ],
+      "latency_ms": 5239
+    },
+    {
+      "id": "q19",
+      "category": "innings",
+      "question": "Who has the most fifties (50 to 99) in IPL history?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(fifties) AS career_fifties FROM marts.mart_batting_season GROUP BY batter ORDER BY career_fifties DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "V Kohli",
+          68.0
+        ]
+      ],
+      "rows": [
+        [
+          "V Kohli",
+          68.0
+        ],
+        [
+          "DA Warner",
+          62.0
+        ],
+        [
+          "S Dhawan",
+          51.0
+        ],
+        [
+          "RG Sharma",
+          49.0
+        ],
+        [
+          "KL Rahul",
+          45.0
+        ]
+      ],
+      "latency_ms": 1718
+    },
+    {
+      "id": "q20",
+      "category": "innings",
+      "question": "How many ducks has Rohit Sharma made in the IPL?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(ducks) AS career_ducks FROM marts.mart_batting_season WHERE batter = 'RG Sharma' GROUP BY batter LIMIT 200",
+      "gold_rows": [
+        [
+          19.0
+        ]
+      ],
+      "rows": [
+        [
+          "RG Sharma",
+          19.0
+        ]
+      ],
+      "latency_ms": 1829
+    },
+    {
+      "id": "q21",
+      "category": "team",
+      "question": "Which team had the best win percentage in the 2008 season?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT team, matches, wins, losses, no_results, win_pct FROM marts.mart_team_season WHERE season_year = 2008 ORDER BY win_pct DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "Rajasthan Royals",
+          81.25
+        ]
+      ],
+      "rows": [
+        [
+          "Rajasthan Royals",
+          16,
+          13,
+          3,
+          0,
+          81.25
+        ],
+        [
+          "Punjab Kings",
+          15,
+          10,
+          5,
+          0,
+          66.67
+        ],
+        [
+          "Chennai Super Kings",
+          16,
+          9,
+          7,
+          0,
+          56.25
+        ],
+        [
+          "Delhi Capitals",
+          14,
+          7,
+          7,
+          0,
+          50.0
+        ],
+        [
+          "Mumbai Indians",
+          14,
+          7,
+          7,
+          0,
+          50.0
+        ]
+      ],
+      "latency_ms": 2134
+    },
+    {
+      "id": "q22",
+      "category": "team",
+      "question": "How many finals have Chennai Super Kings played?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS finals_played, STRING_AGG(CAST(season_year AS TEXT), ', ' ORDER BY season_year) AS seasons FROM marts.mart_team_season WHERE team = 'Chennai Super Kings' AND reached_final LIMIT 200",
+      "gold_rows": [
+        [
+          10
+        ]
+      ],
+      "rows": [
+        [
+          10,
+          "2008, 2010, 2011, 2012, 2013, 2015, 2018, 2019, 2021, 2023"
+        ]
+      ],
+      "latency_ms": 1764
+    },
+    {
+      "id": "q23",
+      "category": "toss",
+      "question": "In how many matches did the toss winner choose to field first?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS matches_toss_winner_chose_field FROM marts.fct_matches WHERE toss_decision = 'field' LIMIT 200",
+      "gold_rows": [
+        [
+          825
+        ]
+      ],
+      "rows": [
+        [
+          825
+        ]
+      ],
+      "latency_ms": 2044
+    },
+    {
+      "id": "q24",
+      "category": "results",
+      "question": "How many matches were affected by rain and decided by Duckworth-Lewis?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS dl_matches FROM marts.fct_matches WHERE is_dl_result LIMIT 200",
+      "gold_rows": [
+        [
+          23
+        ]
+      ],
+      "rows": [
+        [
+          23
+        ]
+      ],
+      "latency_ms": 1980
+    },
+    {
+      "id": "q25",
+      "category": "results",
+      "question": "What is the biggest winning margin by runs in IPL history, and who won?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT match_date, season_year, winner, loser, win_by_runs, venue FROM marts.fct_matches WHERE win_by_runs IS NOT NULL ORDER BY win_by_runs DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "Mumbai Indians",
+          "Delhi Capitals",
+          146,
+          2017
+        ]
+      ],
+      "rows": [
+        [
+          "2017-05-06",
+          2017,
+          "Mumbai Indians",
+          "Delhi Capitals",
+          146,
+          "Arun Jaitley Stadium"
+        ],
+        [
+          "2016-05-14",
+          2016,
+          "Royal Challengers Bengaluru",
+          "Gujarat Lions",
+          144,
+          "M Chinnaswamy Stadium"
+        ],
+        [
+          "2008-04-18",
+          2008,
+          "Kolkata Knight Riders",
+          "Royal Challengers Bengaluru",
+          140,
+          "M Chinnaswamy Stadium"
+        ],
+        [
+          "2015-05-06",
+          2015,
+          "Royal Challengers Bengaluru",
+          "Punjab Kings",
+          138,
+          "M Chinnaswamy Stadium"
+        ],
+        [
+          "2013-04-23",
+          2013,
+          "Royal Challengers Bengaluru",
+          "Pune Warriors",
+          130,
+          "M Chinnaswamy Stadium"
+        ]
+      ],
+      "latency_ms": 1843
+    },
+    {
+      "id": "q26",
+      "category": "dismissals",
+      "question": "How many run outs have there been in IPL history, super overs excluded?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT COUNT(*) AS run_outs FROM marts.fct_deliveries WHERE wicket_kind = 'run out' AND NOT is_super_over LIMIT 200",
+      "gold_rows": [
+        [
+          1185
+        ]
+      ],
+      "rows": [
+        [
+          1185
+        ]
+      ],
+      "latency_ms": 2613
+    },
+    {
+      "id": "q27",
+      "category": "extras",
+      "question": "Which team bowled the most wides in the 2022 season?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT team, SUM(wides) AS wides_conceded FROM marts.mart_bowling_phase WHERE season_year = 2022 GROUP BY team ORDER BY wides_conceded DESC LIMIT 5",
+      "gold_rows": [
+        [
+          "Rajasthan Royals",
+          110
+        ]
+      ],
+      "rows": [
+        [
+          "Rajasthan Royals",
+          129.0
+        ],
+        [
+          "Sunrisers Hyderabad",
+          104.0
+        ],
+        [
+          "Mumbai Indians",
+          88.0
+        ],
+        [
+          "Lucknow Super Giants",
+          84.0
+        ],
+        [
+          "Punjab Kings",
+          83.0
+        ]
+      ],
+      "latency_ms": 2921
+    },
+    {
+      "id": "q28",
+      "category": "players",
+      "question": "Which player has played in the most IPL seasons?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT player, seasons_played, first_season, last_season, matches_played FROM marts.dim_players WHERE seasons_played = (SELECT MAX(seasons_played) FROM marts.dim_players) ORDER BY matches_played DESC LIMIT 200",
+      "gold_rows": [
+        [
+          "MK Pandey",
+          19
+        ],
+        [
+          "RG Sharma",
+          19
+        ],
+        [
+          "V Kohli",
+          19
+        ]
+      ],
+      "rows": [
+        [
+          "RG Sharma",
+          19,
+          2008,
+          2026,
+          276
+        ],
+        [
+          "V Kohli",
+          19,
+          2008,
+          2026,
+          276
+        ],
+        [
+          "MK Pandey",
+          19,
+          2008,
+          2026,
+          164
+        ]
+      ],
+      "latency_ms": 2315
+    },
+    {
+      "id": "q29",
+      "category": "playoffs",
+      "question": "Who has scored the most runs in IPL playoff matches?",
+      "verified": true,
+      "correct": false,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT batter, SUM(runs) AS playoff_runs, COUNT(*) AS innings, SUM(balls_faced) AS balls_faced FROM marts.fct_batting_innings WHERE is_playoff GROUP BY batter ORDER BY playoff_runs DESC LIMIT 10",
+      "gold_rows": [
+        [
+          "SK Raina",
+          714.0
+        ]
+      ],
+      "rows": [
+        [
+          "SK Raina",
+          714.0,
+          24,
+          460.0
+        ],
+        [
+          "Shubman Gill",
+          591.0,
+          14,
+          396.0
+        ],
+        [
+          "MS Dhoni",
+          523.0,
+          23,
+          396.0
+        ],
+        [
+          "V Kohli",
+          514.0,
+          19,
+          394.0
+        ],
+        [
+          "SA Yadav",
+          406.0,
+          12,
+          293.0
+        ]
+      ],
+      "latency_ms": 1836
+    },
+    {
+      "id": "q30",
+      "category": "season",
+      "question": "Who won the orange cap (most runs) in each season from 2020 to 2024?",
+      "verified": true,
+      "correct": true,
+      "attempts": 1,
+      "error": null,
+      "sql": "SELECT season_year, batter, team, runs FROM (SELECT season_year, batter, team, runs, RANK() OVER (PARTITION BY season_year ORDER BY runs DESC) AS rnk FROM (SELECT season_year, batter, STRING_AGG(DISTINCT team, ', ') AS team, SUM(runs) AS runs FROM marts.mart_batting_season WHERE season_year BETWEEN 2020 AND 2024 GROUP BY season_year, batter) AS t) AS r WHERE rnk = 1 ORDER BY season_year LIMIT 200",
+      "gold_rows": [
+        [
+          2020,
+          "KL Rahul",
+          670.0
+        ],
+        [
+          2021,
+          "RD Gaikwad",
+          635.0
+        ],
+        [
+          2022,
+          "JC Buttler",
+          863.0
+        ],
+        [
+          2023,
+          "Shubman Gill",
+          890.0
+        ],
+        [
+          2024,
+          "V Kohli",
+          741.0
+        ]
+      ],
+      "rows": [
+        [
+          2020,
+          "KL Rahul",
+          "Punjab Kings",
+          670.0
+        ],
+        [
+          2021,
+          "RD Gaikwad",
+          "Chennai Super Kings",
+          635.0
+        ],
+        [
+          2022,
+          "JC Buttler",
+          "Rajasthan Royals",
+          863.0
+        ],
+        [
+          2023,
+          "Shubman Gill",
+          "Gujarat Titans",
+          890.0
+        ],
+        [
+          2024,
+          "V Kohli",
+          "Royal Challengers Bengaluru",
+          741.0
+        ]
+      ],
+      "latency_ms": 3166
+    }
+  ]
+}

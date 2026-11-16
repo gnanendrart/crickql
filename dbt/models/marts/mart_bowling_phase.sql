@@ -16,6 +16,7 @@ select
     sum(case when is_four then 1 else 0 end)                        as fours_conceded,
     sum(case when is_six then 1 else 0 end)                         as sixes_conceded,
     sum(extras_wides)                                               as wides,
+    sum(case when extras_wides > 0 then 1 else 0 end)               as wide_balls,
     sum(extras_noballs)                                             as noballs,
     {{ ratio('sum(bowler_runs_conceded)', 'sum(case when is_legal then 1 else 0 end)', 6) }}
                                                                     as economy,
