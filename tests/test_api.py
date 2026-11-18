@@ -25,6 +25,37 @@ def test_query_returns_sql_rows_and_attempts(monkeypatch):
     assert "X-Request-ID" in r.headers
 
 
+def test_answered_has_status(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    monkeypatch.setattr(main, "ask", lambda q: {**FAKE_RESULT, "question": q})
+    body = client.post("/query", json={"question": "Who won in 2014?"}).json()
+    assert body["status"] == "answered" and body["message"] is None
+
+
+def test_not_answerable_is_flagged(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    monkeypatch.setattr(main, "ask", lambda q: {
+        **FAKE_RESULT, "sql": "SELECT 'not answerable: writes are not allowed' AS answer LIMIT 200",
+        "columns": ["answer"], "rows": [["not answerable: writes are not allowed"]]})
+    r = client.post("/query", json={"question": "Drop the fct_matches table"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "not_answerable" and body["message"] == "writes are not allowed"
+    assert body["rows"] == [] and body["row_count"] == 0
+
+
+def test_unknown_player_is_flagged(monkeypatch):
+    from tests.test_outcome import H06_SQL, FakeConn
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
+    monkeypatch.setattr(main, "reader_conn", lambda: FakeConn(set()))
+    monkeypatch.setattr(main, "ask", lambda q: {
+        **FAKE_RESULT, "sql": H06_SQL, "columns": ["player"], "rows": [], "row_count": 0})
+    body = client.post("/query", json={"question": "Bradman debut wickets?"}).json()
+    assert body["status"] == "unknown_entity"
+    assert body["missing_entities"][0]["value"] == "%Bradman%"
+
+
 def test_failed_sql_is_a_structured_422(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test")
     monkeypatch.setattr(main, "ask", lambda q: {**FAKE_RESULT, "ok": False,

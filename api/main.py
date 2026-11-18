@@ -2,7 +2,13 @@
 
 GET  /health   database reachable, marts built, agent configured
 GET  /schema   the schema card the agent sees (generated from dbt docs)
-POST /query    {"question": "..."} -> {sql, columns, rows, attempts, latency_ms}
+POST /query    {"question": "..."} -> {status, message, sql, columns, rows, attempts, latency_ms}
+
+status is one of:
+  answered        rows answer the question
+  not_answerable  the model declined; message has the reason, rows are empty
+  unknown_entity  0 rows because a named player or team is not in the data; message says which
+  no_rows         the query ran and matched nothing
 
 Run: uvicorn api.main:app --reload    then open http://localhost:8000/docs
 """
@@ -19,6 +25,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from api.outcome import classify
 from src.agent.schema_context import schema_card
 from src.agent.text_to_sql import SQL_MODEL, ask, reader_conn
 
@@ -27,7 +34,7 @@ log = logging.getLogger("crickql.api")
 
 app = FastAPI(
     title="CrickQL",
-    version="0.4.0",
+    version="0.5.0",
     description="Ask IPL cricket questions in plain English. Answers come from SQL over a dbt "
     "warehouse built from Cricsheet ball-by-ball data. The SQL runs read-only.",
 )
@@ -46,8 +53,18 @@ class Attempt(BaseModel):
     executed_sql: str | None = None
 
 
+class MissingEntity(BaseModel):
+    kind: str
+    op: str
+    value: str
+
+
 class QueryResponse(BaseModel):
     question: str
+    status: str = Field(..., examples=["answered"],
+                        description="answered | not_answerable | unknown_entity | no_rows")
+    message: str | None = None
+    missing_entities: list[MissingEntity] = []
     sql: str | None
     columns: list[str]
     rows: list[list]
@@ -122,4 +139,5 @@ def query(body: QueryRequest, request: Request):
         return error(422, "sql_failed",
                      f"No valid SQL after {len(result['attempts'])} attempts: {result['error']}",
                      request)
+    result = classify(result, reader_conn)
     return QueryResponse(**{k: result[k] for k in QueryResponse.model_fields})
