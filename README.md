@@ -64,13 +64,22 @@ Every column, with its description: [`docs/schema_card.md`](docs/schema_card.md)
 
 ## Results
 
-Execution accuracy on a 30-question eval set (`evals/sql_eval.yaml`). The generated SQL and the hand-written gold SQL both run, and the result sets have to match.
+Execution accuracy: the generated SQL and the verified gold SQL both run, and the result sets have to match. Model: `claude-sonnet-5-5`. Every number here comes from [`evals/results.md`](evals/results.md) and the run files in `evals/runs/`, which only the eval script writes.
 
-| Run | Model | Accuracy |
-|---|---|---|
-| Not run yet | | |
+| Run | Questions | Correct | Accuracy |
+|---|---|---|---|
+| Baseline | 30 | 14 | 46.7% |
+| Scorer v2 | 30 | 29 | 96.7% |
+| Scorer v2 + `wide_balls` column | 30 | 30 | 100.0% |
+| Holdout (written blind) | 12 | 11 | 91.7% |
+| Holdout, answerable only | 9 | 9 | |
+| Holdout, not answerable only | 3 | 2 | |
 
-Every number here comes from `evals/results.md`, which only the eval script writes.
+How to read it:
+
+- **The baseline was the scorer, not the model.** 14 of the 16 failures had the right answer in row 1. The agent returned a top 5 and the scorer demanded an exact row count. Scorer v2 checks that the gold rows come first and allows extra rows. One more failure was my own gold query.
+- **One real model error.** "Which team bowled the most wides in 2022?" The model summed `wides`, which counts wide runs, and got the right team with the wrong number (129, not 110). The fix was in the data model: a `wide_balls` column and descriptions that say "runs, not balls". No special-casing of the question.
+- **The 30 are not the headline.** They were drafted with Claude and verified by me, so 100% proves little on its own. The holdout (`evals/sql_eval_holdout.yaml`) is 12 questions I wrote blind to the agent: 11 of 12. The miss was a false premise, a player who never played IPL. The agent returned an empty table instead of saying so. The API now catches that case (below). The prompt was not tuned on the holdout.
 
 ## Design decisions
 
@@ -84,9 +93,13 @@ Every number here comes from `evals/results.md`, which only the eval script writ
 
 **The agent's context is the dbt docs.** The model sees one schema card, generated from the dbt model and column descriptions. Better documentation means better SQL, and there is no second copy of the schema to drift.
 
-**The LLM never gets write access.** Two layers. sqlglot checks every query before it runs: one statement, SELECT only, marts tables only, no `pg_sleep` or file-reading functions, LIMIT added. Then it runs as `crickql_reader`, a role that can only SELECT from marts, is read-only by default, and is cut off at 10 seconds.
+**The LLM never gets write access.** Three layers. The prompt: a question the data can't answer comes back as `SELECT 'not answerable: <reason>'`, and that is what "drop the fct_matches table" returns. The parser: sqlglot checks every query before it runs: one statement, SELECT only, marts tables only, no `pg_sleep` or file-reading functions, LIMIT added. The database: it runs as `crickql_reader`, a role that can only SELECT from marts, is read-only by default, and is cut off at 10 seconds. Any one layer should be enough. Each has gaps, so all three exist.
 
-**A custom agent, not a framework.** It is about 200 lines: prompt, forced tool call, guardrails, execute, one retry with the error. Every step can be explained, and the same tool-use pattern carries into the router.
+**An empty table is not an answer.** Every `/query` response has a `status`. `answered` means the rows answer the question. `not_answerable` means the model declined, with the reason in `message`. `unknown_entity` means 0 rows because a player or team named in the SQL is not in the data: "How many runs did Brian Lara score in the IPL?" returns "no player matching '%Lara%'" instead of a blank result. `no_rows` means the query ran and nothing matched. The check runs in the API on the generated SQL, so it works for any question, not just the ones in the eval.
+
+**A custom agent, not a framework.** It is about 200 lines: prompt, a `run_sql` tool call, guardrails, execute, one retry with the error. The model rejects a forced tool choice, so it runs with `tool_choice: auto`, the prompt makes the tool mandatory, and a plain-text reply counts as a failed attempt. Every step can be explained, and the same tool-use pattern carries into the router.
+
+**Pinned to what passed.** The Docker image and CI install `requirements-api.lock`, frozen from the image that passed a fresh-clone run. CI runs lint, a fixture seed with dbt, the test suite, and a Docker build with a smoke test on every pull request.
 
 **Postgres and Snowflake from one dbt project.** Postgres is the free path a reviewer runs with `docker compose up`. Snowflake through S3 is the production path. One thin `base_` model per target makes both produce the same columns, so every model above it is shared.
 
@@ -117,6 +130,10 @@ docs/         schema card (every table and column), Airflow screenshot
 sql/          Postgres raw schema and read-only role, Snowflake stage and COPY
 notebooks/    reconciliation against my earlier Kaggle load
 ```
+
+## How this was built
+
+I scoped the project architecture, designed the data models and validation rules, and owned the end-to-end execution across PostgreSQL, Snowflake, S3, Airflow, and Docker. I used Claude as an AI pair programmer to accelerate module scaffolding, dbt models, and test coverage. Every checkpoint was executed and verified on my own machine and cloud accounts—including auditing all 30 eval gold queries, authoring a blind 12-question holdout set, and debugging live infrastructure and edge-case issues logged in [`notes/build_log.md`](notes/build_log.md).
 
 ## Data and licence
 
