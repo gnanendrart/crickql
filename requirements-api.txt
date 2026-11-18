@@ -1,5 +1,11 @@
 # Runtime dependencies for the Docker image (API + seed). No cloud SDKs: the Docker path
 # needs no AWS or Snowflake account. Full dev set: requirements.txt.
+#
+# This file is the readable list. The Dockerfile and CI install requirements-api.lock, the
+# exact versions from a working image. To update the lock after changing this file:
+#   docker compose build api
+#   docker run --rm crickql-api pip freeze > requirements-api.lock
+# then rerun the fresh-clone check before committing.
 requests>=2.31
 python-dotenv>=1.0
 psycopg2-binary>=2.9

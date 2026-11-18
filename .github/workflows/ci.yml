@@ -34,11 +34,28 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: requirements-api.lock
       - name: Install
-        run: pip install -r requirements-api.txt pytest ruff boto3 "moto[s3]"
+        run: pip install -r requirements-api.lock pytest==9.2.0 ruff==0.17.3 boto3==1.42.33 "moto[s3]==5.2.5"
       - name: Lint
         run: ruff check .
       - name: Seed fixtures + dbt build (models and data tests)
         run: bash scripts/seed.sh
       - name: Tests (Claude calls are mocked, no API key needed)
         run: pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (installs requirements-api.lock, bakes the dbt manifest)
+        run: docker build -t crickql:ci .
+      - name: Smoke test /schema (needs no database or API key)
+        run: |
+          docker run -d --name crickql -p 8000:8000 crickql:ci
+          for i in $(seq 1 30); do
+            curl -sf localhost:8000/schema > schema.json && break
+            sleep 1
+          done
+          docker logs crickql
+          grep -q "marts.fct_matches" schema.json
