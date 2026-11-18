@@ -9,8 +9,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements-api.txt .
-RUN pip install -r requirements-api.txt
+# Exact versions from the image that passed the fresh-clone check (seed PASS=63, /query verified).
+COPY requirements-api.lock .
+RUN pip install -r requirements-api.lock
 
 COPY . .
 
