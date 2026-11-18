@@ -4,6 +4,10 @@
 
 Ask an IPL cricket question in plain English. Get the answer, and the SQL that produced it.
 
+![CrickQL demo: an answered question, a refused write, and an unknown player](docs/demo.gif)
+
+<sub>Recorded with [vhs](https://github.com/charmbracelet/vhs) from [`docs/demo.tape`](docs/demo.tape) against the local API. `scripts/ask.sh` prints the status, message, SQL and rows.</sub>
+
 Under the question box is a real pipeline: Cricsheet ball-by-ball data, validated and loaded into Postgres (and Snowflake through S3), modeled and tested in dbt, orchestrated by Airflow, and served by a FastAPI agent that can only read.
 
 > Status: Weeks 1-4 of 6. Text-to-SQL is live. The rules layer (RAG over the Laws of Cricket) and the router come next.
